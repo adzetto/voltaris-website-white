@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkvoltaris_website=self.webpackChunkvoltaris_website||[]).push([[679],{6470:()=>{}}]);
