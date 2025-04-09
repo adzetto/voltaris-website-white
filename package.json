@@ -1,0 +1,54 @@
+{
+  "name": "voltaris-website",
+  "version": "0.1.0",
+  "private": true,
+  "homepage": "https://adzetto.github.io/voltaris-website-white",
+  "dependencies": {
+    "@react-three/drei": "^9.80.0",
+    "@react-three/fiber": "^8.13.6",
+    "draco3d": "^1.5.7",
+    "katex": "^0.16.21",
+    "lucide-react": "^0.263.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-katex": "^3.0.1",
+    "react-scripts": "5.0.1",
+    "three": "^0.175.0",
+    "three-mesh-bvh": "^0.8.0"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.14",
+    "gh-pages": "^6.3.0",
+    "gltf-pipeline": "^4.1.0",
+    "postcss": "^8.4.27",
+    "react-app-rewired": "^2.2.1",
+    "tailwindcss": "^3.3.3",
+    "webpack-dev-server": "^5.2.1"
+  },
+  "scripts": {
+    "start": "react-app-rewired start",
+    "build": "react-app-rewired build",
+    "test": "react-app-rewired test",
+    "eject": "react-scripts eject",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
+    "optimize-models": "gltf-pipeline -i public/3D/model_3d/Part2_v4_ass-1.bin -o public/3D/model_3d/Part2_v4_ass-1.optimized.bin -d"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
