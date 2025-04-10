@@ -1,7 +1,7 @@
 {
   "files": {
     "main.65125f3d.css": "/voltaris-website-white/static/css/main.65125f3d.f9bb99b8.css",
-    "main.65125f3d.js": "/voltaris-website-white/static/js/main.65125f3d.3946fb42.js",
+    "main.65125f3d.js": "/voltaris-website-white/static/js/main.65125f3d.cce59c84.js",
     "vendor.threejs.19c8c233.js": "/voltaris-website-white/static/js/vendor.threejs.19c8c233.0c882735.js",
     "vendor.three-stdlib.js": "/voltaris-website-white/static/js/vendor.three-stdlib.39056b73.js",
     "vendor.react-dom.js": "/voltaris-website-white/static/js/vendor.react-dom.1392c4e5.js",
@@ -96,6 +96,6 @@
     "static/js/main.a6eb99f0.89d644bb.js",
     "static/js/main.eec7c0f2.f5f14382.js",
     "static/css/main.65125f3d.f9bb99b8.css",
-    "static/js/main.65125f3d.3946fb42.js"
+    "static/js/main.65125f3d.cce59c84.js"
   ]
 }
