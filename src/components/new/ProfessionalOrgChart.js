@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Cpu, Wrench, Briefcase, ChevronDown, ChevronRight, X, Mail, Linkedin, Info, Battery } from 'lucide-react';
 import '../OrganizationChartMobile.css';
+import '../IndustrialDesign.css';
+import '../OrgChartIndustrial.css';
 
 const ProfessionalOrgChart = ({ teamData }) => {
   // This is the updated professional academic version with no mouse-following effects
@@ -209,7 +211,7 @@ const ProfessionalOrgChart = ({ teamData }) => {
   if (!teamData) return null;
   
   return (
-    <div className="w-full bg-white/95 backdrop-blur-sm p-3 sm:p-6 rounded-lg border border-voltaris-blue/20 shadow-lg">
+    <div className="w-full bg-white/95 backdrop-blur-sm p-3 sm:p-6 rounded-lg border border-voltaris-blue/20 shadow-lg industrial-box industrial-corners industrial-corners-bottom org-chart-pro">
       <h3 className="text-2xl font-bold mb-8 text-center">
         <span className="bg-gradient-to-r from-voltaris-blue to-voltaris-text bg-clip-text text-transparent">Organizasyon Yapımız</span>
         <div className="h-0.5 w-20 bg-gradient-to-r from-voltaris-blue to-transparent mx-auto mt-2"></div>
@@ -222,11 +224,11 @@ const ProfessionalOrgChart = ({ teamData }) => {
           {/* Academic Advisor */}
           <div className="flex justify-center">
             <div 
-              className={`org-box board-box cursor-pointer ${isMemberExpanded(teamData.advisors[0]?.id) ? 'border-voltaris-blue/50' : ''}`}
+              className={`org-box board-box cursor-pointer industrial-border ${isMemberExpanded(teamData.advisors[0]?.id) ? 'border-voltaris-blue/50' : ''}`}
               onClick={(e) => toggleMember(teamData.advisors[0]?.id, e)}
             >
               <div className="flex items-center justify-center mb-2">
-                <div className={`${isMemberExpanded(teamData.advisors[0]?.id) ? 'w-32 h-32' : 'w-28 h-28'} rounded-lg overflow-hidden border-2 border-voltaris-blue/30 mx-auto shadow-lg shadow-voltaris-blue/10 transition-all duration-300`}>
+                <div className={`${isMemberExpanded(teamData.advisors[0]?.id) ? 'w-32 h-32' : 'w-28 h-28'} rounded-lg overflow-hidden border-2 border-voltaris-blue/30 mx-auto shadow-lg shadow-voltaris-blue/10 transition-all duration-300 industrial-corners industrial-corners-bottom`}>
                   <img 
                     src={teamData.advisors[0]?.image || "/team/placeholder-2.jpg"}
                     alt="Akademik Danışman"
@@ -271,11 +273,11 @@ const ProfessionalOrgChart = ({ teamData }) => {
           {/* Team Captain */}
           <div className="flex justify-center">
             <div 
-              className={`org-box ceo-box cursor-pointer ${isMemberExpanded(teamData.teamLeadership[0]?.id) ? 'border-voltaris-red/50' : ''}`}
+              className={`org-box ceo-box cursor-pointer industrial-border ${isMemberExpanded(teamData.teamLeadership[0]?.id) ? 'border-voltaris-red/50' : ''}`}
               onClick={(e) => toggleMember(teamData.teamLeadership[0]?.id, e)}
             >
               <div className="flex items-center justify-center mb-2">
-                <div className={`${isMemberExpanded(teamData.teamLeadership[0]?.id) ? 'w-32 h-32' : 'w-28 h-28'} rounded-lg overflow-hidden border-2 border-voltaris-red/30 mx-auto shadow-lg shadow-voltaris-red/10 transition-all duration-300`}>
+                <div className={`${isMemberExpanded(teamData.teamLeadership[0]?.id) ? 'w-32 h-32' : 'w-28 h-28'} rounded-lg overflow-hidden border-2 border-voltaris-red/30 mx-auto shadow-lg shadow-voltaris-red/10 transition-all duration-300 industrial-corners industrial-corners-bottom`}>
                   <img 
                     src={teamData.teamLeadership[0]?.image || "/team/placeholder-1.jpg"}
                     alt="Takım Kaptanı"

@@ -1,41 +1,46 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  ChevronDown, Menu, X, 
-  ChevronRight, Cpu, Terminal, Camera, 
-  GitMerge, Linkedin, Mail, Phone, Instagram, AlertTriangle, Navigation, Eye, Sun, CircuitBoard, 
-  ArrowRight, BarChart, Activity, Zap, ChevronUp, PlusCircle, MinusCircle, Battery, Scale, Gauge, FileText
-} from "lucide-react";
-import * as THREE from 'three';
-import ExpandableSection from './components/ExpandableSection';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
-import { useFrame, useThree } from '@react-three/fiber';
-import { OrbitControls, Text } from '@react-three/drei';
-import TechnicalDataViz from './TechnicalDataViz';
-import SponsorshipModal from './SponsorshipModal';
-import teamData from './teamData';
-import { TeamStats, SponsorShowcase } from './TeamComponents';
-import { FlowingCircuitEntryAnimation, CircuitLoadingAnimation, ProfessionalOrgChart } from './components/new';
-import AdasSystemArchitecture, { LaneDetectionDiagram, TrafficSignDetectionDiagram, CruiseControlSystemDiagram, BlindSpotDetectionDiagram } from './AdasSvgComponents';
-import TechnicalModelViewer from './components/TechnicalModelViewer';
+import React, { useState, useEffect, useRef, useMemo, Suspense } from 'react';
+import { Canvas } from '@react-three/fiber';
+import { OrbitControls, PerspectiveCamera, Environment, ContactShadows, Html } from '@react-three/drei';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Tilt } from 'react-tilt';
+import CountUp from 'react-countup';
+import { Parallax, ParallaxLayer } from '@react-spring/parallax';
+import { BarChart, ChevronDown, ChevronRight, ChevronUp, CircuitBoard, Cpu, Download, ExternalLink, Facebook, Gauge, Github, Info, Instagram, Linkedin, Mail, Menu, MessageSquare, Monitor, Phone, Scale, X, LucideYoutube, Battery, Award, BookOpen, Calendar, Clock, DollarSign, Users, Zap, Lightbulb, Shield, LifeBuoy, Hexagon } from 'lucide-react';
+import { Howl } from 'howler';
+import { TwitterTimelineEmbed } from 'react-twitter-embed';
+import { Tooltip } from 'react-tooltip';
+import { InView } from 'react-intersection-observer';
+import 'katex/dist/katex.min.css';
+import { InlineMath, BlockMath } from 'react-katex';
+import styled from 'styled-components';
+import 'chart.js/auto';
+import { Line, Bar, Radar, Doughnut } from 'react-chartjs-2';
+import LogoAnimation from './components/LogoAnimation';
 import EnhancedSponsorsBar from './components/EnhancedSponsorsBar';
+import CircuitLoadingAnimation from './components/CircuitLoadingAnimation';
+import TeamComponents from './TeamComponents';
+import AdasFeatureDisplay from './components/AdasFeatureDisplay';
+import TechnicalDocumentation from './components/TechnicalDocumentation';
+import ColorPalette from './components/ColorPalette';
+import EnvironmentalImpact from './components/EnvironmentalImpact';
+import { sponsorData, teamData, advisorData, sponsorshipTeam } from './teamData';
+import SponsorshipModal from './SponsorshipModal';
+import TechnicalDataViz from './TechnicalDataViz';
+import SponsorshipBar from './SponsorshipBar';
 import MobileMenuFallback from './components/MobileMenuFallback';
 import './components/PlatinumStyles.css';
 import './components/MobileMenu.css';
 import './styles.css';
 import './latex-styles.css';
 import './advanced-latex.css';
-import './components/BoxStyles.css';
-import './components/ProfessionalPureWhite.css';
-import './components/ProfessionalFonts.css';
 import { useParallax, useScrollAnimation, useTechnicalSpecsAnimation } from './hooks/useInteractive';
 import { setupOptimizers } from './utils/ModelOptimizer';
 import { initMenuVisibilityController, updateMenuButtonVisibility } from './utils/MenuVisibilityController';
 import { fixMobileMenuOnOpen, fixMobileMenuOnClose, fixTechnicalSubmenu, initMobileMenuFix } from './utils/MobileMenuFix';
-import { SoftDesignShowcase } from './components/SoftDesignElements';
-import { VehicleSpecifications, AdasSystemsSpecs } from './components/TechnicalSpecs';
-import VehicleSpecsSection from './components/VehicleSpecsSection';
-import AdasSpecsSection from './components/AdasSpecsSection';
+import { FlowingCircuitEntryAnimation, ProfessionalOrgChart } from './components/new';
+import AdasSystemArchitecture, { LaneDetectionDiagram, TrafficSignDetectionDiagram, CruiseControlSystemDiagram, BlindSpotDetectionDiagram } from './AdasSvgComponents';
+import TechnicalModelViewer from './components/TechnicalModelViewer';
+import { TeamStats, SponsorShowcase } from './TeamComponents';
 import ContactForm from './components/ContactForm';
 
 // Initialize optimizers
@@ -1041,7 +1046,7 @@ function App() {
       
       {/* Standalone Mobile Menu Button */}
       <button 
-        className="md:hidden text-gray-700 focus:outline-none fixed top-5 right-4 z-[9999] mobile-menu-button" 
+        className="md:hidden text-voltaris-dark focus:outline-none fixed top-5 right-4 z-[9999] mobile-menu-button" 
         onClick={toggleMobileMenu}
         aria-label="Menu Toggle"
         style={{ 
@@ -1053,7 +1058,7 @@ function App() {
           alignItems: 'center',
           justifyContent: 'center',
           boxShadow: '0 4px 12px rgba(29, 53, 87, 0.2)',
-          border: '1px solid rgba(200, 200, 200, 0.3)',
+          border: '1px solid rgba(230, 57, 70, 0.3)',
           width: '42px',
           height: '42px'
         }}
@@ -1255,8 +1260,8 @@ function App() {
                   }}
                   className={`text-sm py-3 font-medium px-4 rounded-md w-full text-left flex items-center justify-between mb-1.5 menu-item
                   ${activeSection === section || (section === 'technical' && (activeSection === 'vehicle' || activeSection === 'adas')) 
-                  ? 'bg-gray-100 text-voltaris-red border-l-2 border-voltaris-red' 
-                  : 'text-voltaris-red hover:text-voltaris-red hover:bg-red-50'
+                  ? 'bg-gray-100 text-blue-700 border-l-2 border-blue-500' 
+                  : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                   style={{
                     display: 'flex',
@@ -1279,11 +1284,11 @@ function App() {
                        section === 'technical' ? 'Teknik Detaylar' :
                        section === 'sponsors' ? 'Sponsorluk' : 'İletişim'}
                     </span>
-                    {section === 'technical' && <ChevronDown size={16} className={`transition-transform duration-300 text-voltaris-red ${mobileSubmenuOpen ? 'transform rotate-180' : ''}`} />}
+                    {section === 'technical' && <ChevronDown size={16} className={`transition-transform duration-300 text-gray-500 ${mobileSubmenuOpen ? 'transform rotate-180' : ''}`} />}
                   </button>
                   
                   {section === 'technical' && mobileSubmenuOpen && (
-                    <div className="ml-4 mt-1 mb-3 space-y-1 border-l border-voltaris-red/30 pl-3 mobile-submenu visible" 
+                    <div className="ml-4 mt-1 mb-3 space-y-1 border-l border-gray-200 pl-3 mobile-submenu visible" 
                       style={{
                         display: 'block',
                         visibility: 'visible',
@@ -1303,8 +1308,8 @@ function App() {
                         }} 
                         className={`text-sm py-2 px-3 block w-full text-left rounded-md
                           ${activeSection === 'technical' 
-                            ? 'bg-red-50 text-voltaris-red font-medium' 
-                            : 'text-voltaris-red hover:text-voltaris-red hover:bg-red-50'
+                            ? 'bg-blue-50 text-blue-700 font-medium' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                           }`}
                       >
                         Teknik Detaylar
@@ -1317,8 +1322,8 @@ function App() {
                         }} 
                         className={`text-sm py-2 px-3 block w-full text-left rounded-md
                           ${activeSection === 'vehicle' 
-                            ? 'bg-red-50 text-voltaris-red font-medium' 
-                            : 'text-voltaris-red hover:text-voltaris-red hover:bg-red-50'
+                            ? 'bg-blue-50 text-blue-700 font-medium' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                           }`}
                       >
                         Araç Özellikleri
@@ -1331,8 +1336,8 @@ function App() {
                         }} 
                         className={`text-sm py-2 px-3 block w-full text-left rounded-md
                           ${activeSection === 'adas' 
-                            ? 'bg-red-50 text-voltaris-red font-medium' 
-                            : 'text-voltaris-red hover:text-voltaris-red hover:bg-red-50'
+                            ? 'bg-blue-50 text-blue-700 font-medium' 
+                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                           }`}
                       >
                         ADAS Sistemleri
@@ -1345,24 +1350,21 @@ function App() {
             
             {/* Mobile footer links */}
             <div className="mt-auto pt-5 border-t border-gray-200">
-              <div className="flex flex-col space-y-2 my-4">
+              <div className="flex justify-center space-x-6 my-4">
                 <a href="https://instagram.com/Voltaris.official" target="_blank" rel="noopener noreferrer" 
-                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-md hover:from-purple-600 hover:to-pink-600 transition-colors">
-                  <Instagram size={16} />
-                  <span className="text-sm">Instagram</span>
+                   className="text-gray-400 hover:text-white bg-gray-800/30 p-2.5 rounded-full hover:bg-gray-800/60 transition-colors">
+                  <Instagram size={18} />
                 </a>
                 <a href="https://www.linkedin.com/company/i̇yte-voltaris-teknofest-efficiency-challange/" target="_blank" rel="noopener noreferrer" 
-                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                  <Linkedin size={16} />
-                  <span className="text-sm">LinkedIn</span>
+                   className="text-gray-400 hover:text-white bg-gray-800/30 p-2.5 rounded-full hover:bg-gray-800/60 transition-colors">
+                  <Linkedin size={18} />
                 </a>
                 <a href="mailto:info@voltaris.com" 
-                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-voltaris-red text-white rounded-md hover:bg-red-600 transition-colors">
-                  <Mail size={16} />
-                  <span className="text-sm">Email</span>
+                   className="text-gray-400 hover:text-white bg-gray-800/30 p-2.5 rounded-full hover:bg-gray-800/60 transition-colors">
+                  <Mail size={18} />
                 </a>
               </div>
-              <div className="text-center text-xs text-voltaris-red mb-1">
+              <div className="text-center text-xs text-gray-500 mb-1">
                 © 2025 Voltaris
               </div>
             </div>
@@ -1682,9 +1684,9 @@ function App() {
                 </div>
             </div>
           
-          {/* Soft Design Components - replacing Ackermann Principle */}
+          {/* Add Ackermann Principle Component */}
           <div className="mt-8">
-            <SoftDesignShowcase />
+            <AckermannPrinciple />
           </div>
         </div>
       </section>
@@ -1701,7 +1703,7 @@ function App() {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-blue/40 transition-all duration-300 industrial-container industrial-corners-box industrial-corners-box-bottom">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-blue/40 transition-all duration-300">
               <div className="flex items-center mb-4">
                 <div className="text-voltaris-blue mr-3">
                   <Battery size={24} />
@@ -1728,7 +1730,7 @@ function App() {
               </ul>
             </div>
             
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-red/40 transition-all duration-300 industrial-container industrial-corners-box industrial-corners-box-bottom">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-red/40 transition-all duration-300">
               <div className="flex items-center mb-4">
                 <div className="text-voltaris-red mr-3">
                   <Cpu size={24} />
@@ -1756,8 +1758,8 @@ function App() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 industrial-grid-background">
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-red/40 transition-all duration-300 industrial-container industrial-box-red">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-red/40 transition-all duration-300">
               <div className="flex items-center mb-4">
                 <div className="text-voltaris-red mr-3">
                   <BarChart size={24} />
@@ -1784,7 +1786,7 @@ function App() {
               </ul>
             </div>
             
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-blue/40 transition-all duration-300 industrial-container industrial-box-blue">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-blue/40 transition-all duration-300">
               <div className="flex items-center mb-4">
                 <div className="text-voltaris-blue mr-3">
                   <CircuitBoard size={24} />
@@ -1826,7 +1828,7 @@ function App() {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 industrial-stat-box">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200">
               <h3 className="text-xl font-bold mb-4 text-voltaris-blue flex items-center">
                 <Scale size={20} className="mr-2" />
                 Boyut ve Ağırlık
@@ -1929,7 +1931,7 @@ function App() {
           <div className="bg-voltaris-card-dark p-6 rounded-lg border border-gray-200 mt-6">
             <h3 className="text-xl font-bold mb-4 text-center text-voltaris-red">Yapısal Özellikler</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm industrial-feature-box">
+              <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 shadow-sm">
                 <h4 className="font-bold mb-2 text-voltaris-blue text-base">Şasi</h4>
                 <p className="text-voltaris-secondary text-sm">Alüminyum profil kullanılarak tasarlanmış, hafif ve dayanıklı şasi yapısı. Çarpışma testlerinden geçirilmiş güvenli tasarım.</p>
               </div>
@@ -1965,7 +1967,7 @@ function App() {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 mb-8 sm:mb-12">
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-red/40 transition-all duration-300 industrial-container industrial-corners-box">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-red/40 transition-all duration-300">
               <div className="flex items-center mb-4">
                 <div className="text-voltaris-red mr-3">
                   <GitMerge size={24} />
@@ -1989,7 +1991,7 @@ function App() {
               </div>
             </div>
             
-            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-blue/40 transition-all duration-300 industrial-container industrial-corners-box">
+            <div className="bg-gray-50 shadow-card p-6 rounded-lg border border-gray-200 hover:border-voltaris-blue/40 transition-all duration-300">
               <div className="flex items-center mb-4">
                 <div className="text-voltaris-blue mr-3">
                   <AlertTriangle size={24} />
@@ -2075,7 +2077,7 @@ function App() {
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
             {/* Lane Detection System */}
-            <div className="bg-white p-4 rounded-lg border border-voltaris-red/50 hover:border-voltaris-red/80 transition-all duration-300 shadow-sm collapsible-diagram-container relative overflow-hidden group industrial-corners-box industrial-corners-box-bottom">
+            <div className="bg-gradient-to-r from-red-900/30 via-black to-red-900/30 p-4 rounded-lg border border-red-500/30 hover:border-red-500/50 transition-all duration-300 shadow-lg collapsible-diagram-container relative overflow-hidden group">
               <div 
                 className="flex items-center justify-between cursor-pointer" 
                 onClick={() => {
@@ -2086,19 +2088,19 @@ function App() {
                   }
                 }}
               >
-                <h3 className="text-xl font-bold text-voltaris-red">Şerit Takip Sistemi</h3>
-                <ChevronDown id="laneDetectionIcon" className="text-voltaris-red transition-transform duration-300" />
+                <h3 className="text-xl font-bold text-red-400">Şerit Takip Sistemi</h3>
+                <ChevronDown id="laneDetectionIcon" className="text-red-400 transition-transform duration-300" />
               </div>
               <div id="laneDetectionContent" className="hidden mt-4 overflow-x-auto">
                 <div className="animate-slideInUp">
                   <LaneDetectionDiagram />
                 </div>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-voltaris-red/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-700"></div>
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-red-500/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             </div>
             
             {/* Traffic Sign Detection */}
-            <div className="bg-white p-4 rounded-lg border border-voltaris-blue/50 hover:border-voltaris-blue/80 transition-all duration-300 shadow-sm collapsible-diagram-container relative overflow-hidden group industrial-corners-box industrial-corners-box-bottom">
+            <div className="bg-gradient-to-r from-blue-900/30 via-black to-blue-900/30 p-4 rounded-lg border border-blue-500/30 hover:border-blue-500/50 transition-all duration-300 shadow-lg collapsible-diagram-container relative overflow-hidden group">
               <div 
                 className="flex items-center justify-between cursor-pointer" 
                 onClick={() => {
@@ -2109,19 +2111,19 @@ function App() {
                   }
                 }}
               >
-                <h3 className="text-xl font-bold text-voltaris-blue">Trafik İşareti Tanıma</h3>
-                <ChevronDown id="trafficSignIcon" className="text-voltaris-blue transition-transform duration-300" />
+                <h3 className="text-xl font-bold text-blue-400">Trafik İşareti Tanıma</h3>
+                <ChevronDown id="trafficSignIcon" className="text-blue-400 transition-transform duration-300" />
               </div>
               <div id="trafficSignContent" className="hidden mt-4 overflow-x-auto">
                 <div className="animate-slideInUp">
                   <TrafficSignDetectionDiagram />
                 </div>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-voltaris-blue/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-700"></div>
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-blue-500/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             </div>
             
             {/* Blind Spot Detection */}
-            <div className="bg-white p-4 rounded-lg border border-green-500/50 hover:border-green-500/80 transition-all duration-300 shadow-sm collapsible-diagram-container relative overflow-hidden group">
+            <div className="bg-gradient-to-r from-green-900/30 via-black to-green-900/30 p-4 rounded-lg border border-green-500/30 hover:border-green-500/50 transition-all duration-300 shadow-lg collapsible-diagram-container relative overflow-hidden group">
               <div 
                 className="flex items-center justify-between cursor-pointer" 
                 onClick={() => {
@@ -2132,19 +2134,19 @@ function App() {
                   }
                 }}
               >
-                <h3 className="text-xl font-bold text-green-600">Kör Nokta Tespit Sistemi</h3>
-                <ChevronDown id="blindSpotIcon" className="text-green-600 transition-transform duration-300" />
+                <h3 className="text-xl font-bold text-green-400">Kör Nokta Tespit Sistemi</h3>
+                <ChevronDown id="blindSpotIcon" className="text-green-400 transition-transform duration-300" />
               </div>
               <div id="blindSpotContent" className="hidden mt-4 overflow-x-auto">
                 <div className="animate-slideInUp">
                   <BlindSpotDetectionDiagram />
                 </div>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-green-500/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-700"></div>
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-green-500/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             </div>
             
             {/* Cruise Control System */}
-            <div className="bg-white p-4 rounded-lg border border-yellow-500/50 hover:border-yellow-500/80 transition-all duration-300 shadow-sm collapsible-diagram-container relative overflow-hidden group">
+            <div className="bg-gradient-to-r from-yellow-900/30 via-black to-yellow-900/30 p-4 rounded-lg border border-yellow-500/30 hover:border-yellow-500/50 transition-all duration-300 shadow-lg collapsible-diagram-container relative overflow-hidden group">
               <div 
                 className="flex items-center justify-between cursor-pointer" 
                 onClick={() => {
@@ -2155,15 +2157,15 @@ function App() {
                   }
                 }}
               >
-                <h3 className="text-xl font-bold text-yellow-600">Akıllı Hız Sabitleyici</h3>
-                <ChevronDown id="cruiseControlIcon" className="text-yellow-600 transition-transform duration-300" />
+                <h3 className="text-xl font-bold text-yellow-400">Akıllı Hız Sabitleyici</h3>
+                <ChevronDown id="cruiseControlIcon" className="text-yellow-400 transition-transform duration-300" />
               </div>
               <div id="cruiseControlContent" className="hidden mt-4 overflow-x-auto">
                 <div className="animate-slideInUp">
                   <CruiseControlSystemDiagram />
                 </div>
               </div>
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-yellow-500/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-30 transition-opacity duration-700"></div>
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-yellow-500/5 rounded-full filter blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
             </div>
           </div>
         </div>

@@ -6,32 +6,32 @@ const ExpandableSection = ({ title, children, color = "blue", id, defaultOpen = 
 
   const colorClasses = {
     red: {
-      border: "border-red-900/30 hover:border-red-500/40",
-      bg: "from-red-900/30 via-black to-red-900/20",
-      text: "text-red-400",
-      iconBg: "bg-red-900/30",
-      icon: "text-red-500"
+      border: "border-voltaris-red/30 hover:border-voltaris-red/50",
+      bg: "from-voltaris-red/10 via-voltaris-neutral-100 to-voltaris-red/5",
+      text: "text-voltaris-red",
+      iconBg: "bg-voltaris-red/10",
+      icon: "text-voltaris-red"
     },
     blue: {
-      border: "border-blue-900/30 hover:border-blue-500/40",
-      bg: "from-blue-900/30 via-black to-blue-900/20",
-      text: "text-blue-400",
-      iconBg: "bg-blue-900/30",
-      icon: "text-blue-500"
+      border: "border-voltaris-blue/30 hover:border-voltaris-blue/50",
+      bg: "from-voltaris-blue/10 via-voltaris-neutral-100 to-voltaris-blue/5",
+      text: "text-voltaris-blue",
+      iconBg: "bg-voltaris-blue/10",
+      icon: "text-voltaris-blue"
     },
     purple: {
-      border: "border-purple-900/30 hover:border-purple-500/40", 
-      bg: "from-purple-900/30 via-black to-purple-900/20",
-      text: "text-purple-400",
-      iconBg: "bg-purple-900/30",
-      icon: "text-purple-500"
+      border: "border-purple-400/30 hover:border-purple-400/50", 
+      bg: "from-purple-400/10 via-voltaris-neutral-100 to-purple-400/5",
+      text: "text-purple-600",
+      iconBg: "bg-purple-400/10",
+      icon: "text-purple-600"
     },
     green: {
-      border: "border-green-900/30 hover:border-green-500/40",
-      bg: "from-green-900/30 via-black to-green-900/20",
-      text: "text-green-400",
-      iconBg: "bg-green-900/30",
-      icon: "text-green-500"
+      border: "border-green-500/30 hover:border-green-500/50",
+      bg: "from-green-500/10 via-voltaris-neutral-100 to-green-500/5",
+      text: "text-green-600",
+      iconBg: "bg-green-500/10",
+      icon: "text-green-600"
     }
   };
 

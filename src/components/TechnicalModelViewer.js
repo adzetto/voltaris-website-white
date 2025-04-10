@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Text, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -455,6 +455,8 @@ const InnerTechnicalScene = () => {
 const TechnicalModelViewer = () => {
   // Create a ref for the EnhancedModelViewer component
   const modelViewerRef = useRef(null);
+  // Add state for rotation to track UI changes
+  const [isRotating, setIsRotating] = useState(true);
   
   return (
     <div className="relative w-full h-52 sm:h-64 md:h-96 lg:h-[420px] rounded-lg overflow-hidden border border-voltaris-neutral-300 shadow-lg shadow-voltaris-neutral-300/20 model-viewer-container">
@@ -505,10 +507,11 @@ const TechnicalModelViewer = () => {
           
           <div className="flex space-x-2 items-center">
             <button
-              className="text-[10px] xs:text-xs font-mono px-2 xs:px-3 py-1 xs:py-1.5 bg-voltaris-red/10 border border-voltaris-red/30 text-voltaris-red rounded hover:bg-voltaris-red/20 transition-all duration-200 flex items-center shadow-sm"
+              className="text-[10px] xs:text-xs font-mono px-2 xs:px-3 py-1 xs:py-1.5 bg-gray-50 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition-all duration-200 flex items-center shadow-sm"
               onClick={() => {
                 if (modelViewerRef.current) {
                   modelViewerRef.current.toggleRotation();
+                  setIsRotating(!isRotating);
                 }
               }}
             >
@@ -516,11 +519,11 @@ const TechnicalModelViewer = () => {
                 <circle cx="12" cy="12" r="10" />
                 <path d="M12 6v6l4 2" />
               </svg>
-              Dönüşü Yönet
+              {isRotating ? "Free" : "Fixed"}
             </button>
             
             <button
-              className="text-[10px] xs:text-xs font-mono px-2 xs:px-3 py-1 xs:py-1.5 bg-voltaris-blue/10 border border-voltaris-blue/30 text-voltaris-blue rounded hover:bg-voltaris-blue/20 transition-all duration-200 flex items-center shadow-sm"
+              className="text-[10px] xs:text-xs font-mono px-2 xs:px-3 py-1 xs:py-1.5 bg-gray-50 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition-all duration-200 flex items-center shadow-sm"
               onClick={() => {
                 if (modelViewerRef.current) {
                   modelViewerRef.current.resetCameraView();
@@ -530,7 +533,7 @@ const TechnicalModelViewer = () => {
               <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-              Merkeze Al
+              Reset
             </button>
           </div>
         </div>

@@ -2018,4 +2018,5 @@ export const BlindSpotDetectionDiagram = () => {
 };
 
 export default AdasSystemArchitecture;
+
 export { LaneDetectionDiagram, TrafficSignDetectionDiagram, CruiseControlSystemDiagram };

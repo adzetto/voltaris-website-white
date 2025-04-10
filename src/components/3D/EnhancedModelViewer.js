@@ -1,4 +1,4 @@
-import React, { Suspense, useRef, useState, useEffect, useImperativeHandle, forwardRef } from 'react';
+import React, { Suspense, useRef, useState, useEffect, useImperativeHandle, forwardRef, useCallback } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { 
   OrbitControls, 
@@ -422,6 +422,10 @@ const EnhancedModelViewer = forwardRef((props, ref) => {
     },
     toggleRotation: () => {
       setOrbitEnabled(!orbitEnabled);
+    },
+    // Add a property to check rotation state
+    get isRotating() {
+      return orbitEnabled;
     }
   }));
   

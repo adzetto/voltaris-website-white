@@ -4,13 +4,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        'voltaris-red': '#E14D5A',
-        'voltaris-blue': '#4A90BF',
+        'voltaris-red': '#FF4254',
+        'voltaris-blue': '#0044FF',
         'voltaris-light-blue': '#CEE5F2',
-        'voltaris-light': '#F9FBFD',
+        'voltaris-light': '#FFFFFF',
         'voltaris-bg': '#FFFFFF',
         'voltaris-card': '#FFFFFF',
-        'voltaris-card-dark': '#F7FAFD',
+        'voltaris-card-dark': '#FAFAFA',
         'voltaris-text': '#3A506B',
         'voltaris-text-light': '#6B8CAD',
         'voltaris-soft-bg': '#F0F7FF',

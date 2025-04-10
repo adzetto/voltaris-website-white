@@ -84,14 +84,29 @@ export const enhanceSubmenuButtons = () => {
     button.style.opacity = '1';
     button.style.pointerEvents = 'auto';
     button.style.zIndex = '10005';
+    button.style.color = '#334155';
+    button.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+    button.style.borderRadius = '0.375rem';
+    button.style.marginBottom = '0.5rem';
+    
+    // Make sure all spans inside buttons are visible and properly colored
+    const spans = button.querySelectorAll('span');
+    spans.forEach(span => {
+      span.style.visibility = 'visible';
+      span.style.opacity = '1';
+      span.style.color = '#334155';
+      span.style.display = 'inline';
+    });
     
     // Add a red hover effect
     button.addEventListener('mouseover', () => {
-      button.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+      button.style.backgroundColor = 'rgba(255, 66, 84, 0.1)';
+      button.style.color = '#FF4254';
     });
     
     button.addEventListener('mouseout', () => {
-      button.style.backgroundColor = 'transparent';
+      button.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+      button.style.color = '#334155';
     });
   });
 };
@@ -111,12 +126,17 @@ export const enhanceMenuContent = () => {
       .mobile-menu-panel button,
       .mobile-menu-panel a,
       .mobile-menu-panel div,
-      .mobile-menu-panel svg,
-      .mobile-menu-panel span {
+      .mobile-menu-panel svg {
         display: block !important;
         visibility: visible !important;
         opacity: 1 !important;
-        color: #f1f1f1 !important;
+      }
+      
+      .mobile-menu-panel span {
+        display: inline !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        color: #334155 !important;
       }
       
       .mobile-menu-panel .menu-item {
@@ -169,11 +189,38 @@ export const fixTechnicalSubmenu = (isOpen) => {
       submenu.style.maxHeight = '500px';
       submenu.style.visibility = 'visible';
       submenu.style.opacity = '1';
+      submenu.style.position = 'relative';
+      submenu.style.zIndex = '10003';
       submenu.classList.add('visible');
       submenu.classList.remove('hidden');
       
+      // Ensure submenu has proper styling
+      submenu.style.paddingLeft = '1rem';
+      submenu.style.marginTop = '0.5rem';
+      submenu.style.marginBottom = '0.5rem';
+      submenu.style.borderLeft = '1px solid rgba(239, 68, 68, 0.3)';
+      
       // Apply enhanced styling to all buttons in the submenu
       enhanceSubmenuButtons();
+      
+      // Force visibility after a short delay to ensure rendering
+      setTimeout(() => {
+        if (isOpen) {
+          const buttons = submenu.querySelectorAll('button');
+          buttons.forEach(button => {
+            button.style.visibility = 'visible';
+            button.style.opacity = '1';
+            button.style.color = '#334155';
+            
+            const spans = button.querySelectorAll('span');
+            spans.forEach(span => {
+              span.style.visibility = 'visible';
+              span.style.opacity = '1';
+              span.style.color = '#334155';
+            });
+          });
+        }
+      }, 100);
     } else {
       submenu.style.maxHeight = '0';
       submenu.style.visibility = 'hidden';

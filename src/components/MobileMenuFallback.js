@@ -49,17 +49,34 @@ const MobileMenuFallback = () => {
           margin-left: 1rem !important;
           padding-left: 0.75rem !important;
           border-left: 1px solid rgba(239, 68, 68, 0.3) !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          display: block !important;
+          position: relative !important;
+          z-index: 10003 !important;
         }
         
         .mobile-menu-panel .mobile-submenu button {
           width: 100% !important;
           text-align: left !important;
           padding: 0.625rem 0.75rem !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          display: block !important;
+          position: relative !important;
+          z-index: 10004 !important;
+          color: #334155 !important;
+        }
+        
+        .mobile-menu-panel .mobile-submenu button span {
+          color: #334155 !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         }
         
         .mobile-menu-panel span {
           display: inline !important;
-          color: #f1f1f1 !important;
+          color: #334155 !important;
         }
       `;
       
