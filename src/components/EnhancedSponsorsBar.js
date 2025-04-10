@@ -69,6 +69,14 @@ const EnhancedSponsorsBar = ({ sponsors }) => {
         {sponsors.map((sponsor) => {
           const tierConfig = getTierConfig(sponsor.tier);
           
+          // Determine if this is the Pilci logo based on the logo source
+          const isPilciLogo = sponsor.logo.toLowerCase().includes('pilci');
+          
+          // Apply special styling for Pilci logo - larger height
+          const logoHeight = isPilciLogo 
+            ? `${parseInt(tierConfig.height) + 4}px` // Add 4px to the default height
+            : tierConfig.height;
+          
           return (
             <div key={sponsor.id} className="sponsor-container relative mx-6">
               <a 
@@ -82,8 +90,8 @@ const EnhancedSponsorsBar = ({ sponsors }) => {
                   alt={sponsor.name}
                   className="sponsor-logo transition-transform hover:scale-110"
                   style={{
-                    height: tierConfig.height,
-                    maxHeight: tierConfig.height
+                    height: logoHeight,
+                    maxHeight: logoHeight
                   }}
                 />
                 
