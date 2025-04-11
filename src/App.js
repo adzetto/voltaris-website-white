@@ -31,12 +31,13 @@ import './components/ProfessionalFonts.css';
 import { useParallax, useScrollAnimation, useTechnicalSpecsAnimation } from './hooks/useInteractive';
 import { setupOptimizers } from './utils/ModelOptimizer';
 import { initMenuVisibilityController, updateMenuButtonVisibility } from './utils/MenuVisibilityController';
-import { fixMobileMenuOnOpen, fixMobileMenuOnClose, fixTechnicalSubmenu, initMobileMenuFix } from './utils/MobileMenuFix';
+import { fixMobileMenuOnOpen, fixMobileMenuOnClose, fixTechnicalSubmenu, initMobileMenuFix, forceEnableScrolling } from './utils/MobileMenuFix';
 import { SoftDesignShowcase } from './components/SoftDesignElements';
 import { VehicleSpecifications, AdasSystemsSpecs } from './components/TechnicalSpecs';
 import VehicleSpecsSection from './components/VehicleSpecsSection';
 import AdasSpecsSection from './components/AdasSpecsSection';
 import ContactForm from './components/ContactForm';
+import ScrollIndicatorBar from './components/ui/ScrollIndicatorBar';
 
 // Initialize optimizers
 setupOptimizers();
@@ -404,7 +405,7 @@ const CarModel = () => {
         }
       }
     };
-  }, []);
+  }, []); // No need for dependencies here
   
   // Helper functions to get model statistics
   const getPolygonCount = (model) => {
@@ -828,7 +829,22 @@ function App() {
     // Initialize mobile menu fixes
     const cleanup2 = initMobileMenuFix();
     
+    // This function ensures scrolling is enabled whenever user tries to scroll
+    const handleTouchStart = () => {
+      forceEnableScrolling();
+    };
+    
+    // Touch event for mobile to ensure scrolling is enabled
+    document.addEventListener('touchstart', handleTouchStart, { passive: true });
+    
+    // Add additional handlers to ensure scrolling is always enabled
+    document.addEventListener('touchmove', forceEnableScrolling, { passive: true });
+    document.addEventListener('wheel', forceEnableScrolling, { passive: true });
+    
     const handleScroll = () => {
+      // Ensure scrolling is always enabled
+      forceEnableScrolling();
+      
       if (window.scrollY > 50) {
         setScrolled(true);
       } else {
@@ -855,10 +871,13 @@ function App() {
         const sectionId = section.getAttribute('id');
 
         if (scrollPosition >= sectionTop && scrollPosition < sectionTop + sectionHeight) {
-          setActiveSection(sectionId);
-          
-          // Update menu button visibility when section changes
-          updateMenuButtonVisibility(sectionId, window.scrollY > 50);
+          // Only trigger transition if we're changing sections
+          if (activeSection !== sectionId) {
+            setActiveSection(sectionId);
+            
+            // Update menu button visibility when section changes
+            updateMenuButtonVisibility(sectionId, window.scrollY > 50);
+          }
         }
       });
     };
@@ -871,12 +890,15 @@ function App() {
     
     return () => {
       window.removeEventListener('scroll', handleScroll);
+      document.removeEventListener('touchstart', handleTouchStart);
+      document.removeEventListener('touchmove', forceEnableScrolling);
+      document.removeEventListener('wheel', forceEnableScrolling);
       if (cleanup1) cleanup1();
       if (cleanup2) cleanup2();
       clearTimeout(loadingTimer);
       clearTimeout(signatureTimer);
     };
-  }, []);
+  }, [activeSection]); // Add activeSection as dependency
 
   // Function for handling mobile menu toggle regardless of section
   const toggleMobileMenu = (e) => {
@@ -961,14 +983,25 @@ function App() {
         // First close menu with short timeout to allow state update
         setMobileMenuOpen(false);
         
+        // Force unlock scrolling before attempting to scroll
+        forceEnableScrolling();
+        
         // Then scroll after a short delay to ensure menu animation completes
         setTimeout(() => {
+          // Re-apply scroll unlock in case it was overridden
+          forceEnableScrolling();
+          
           window.scrollTo({
             top: section.offsetTop - 80,
             behavior: 'smooth'
           });
           setActiveSection(sectionId);
-        }, 350); // Match the menu animation duration
+          
+          // Final check to ensure scrolling is enabled
+          setTimeout(() => {
+            forceEnableScrolling();
+          }, 100);
+        }, 400); // Slightly longer than menu animation duration
       } else {
         // If menu is already closed, scroll immediately
         window.scrollTo({
@@ -1093,6 +1126,9 @@ function App() {
         onClose={() => setSponsorshipModalOpen(false)}
         currentTier={currentSponsorTier}
       />
+      
+      {/* Scroll Progress Indicator */}
+      <ScrollIndicatorBar />
       
       {/* Navigation */}
       <header className={`fixed w-full z-50 transition-all duration-500 
@@ -1298,8 +1334,16 @@ function App() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          scrollToSection('technical');
+                          // First close menu
                           setMobileMenuOpen(false);
+                          
+                          // Force unlock scrolling
+                          forceEnableScrolling();
+                          
+                          // Then navigate after a delay
+                          setTimeout(() => {
+                            scrollToSection('technical');
+                          }, 400);
                         }} 
                         className={`text-sm py-2 px-3 block w-full text-left rounded-md
                           ${activeSection === 'technical' 
@@ -1312,8 +1356,16 @@ function App() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          scrollToSection('vehicle');
+                          // First close menu
                           setMobileMenuOpen(false);
+                          
+                          // Force unlock scrolling
+                          forceEnableScrolling();
+                          
+                          // Then navigate after a delay
+                          setTimeout(() => {
+                            scrollToSection('vehicle');
+                          }, 400);
                         }} 
                         className={`text-sm py-2 px-3 block w-full text-left rounded-md
                           ${activeSection === 'vehicle' 
@@ -1326,8 +1378,16 @@ function App() {
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
-                          scrollToSection('adas');
+                          // First close menu
                           setMobileMenuOpen(false);
+                          
+                          // Force unlock scrolling
+                          forceEnableScrolling();
+                          
+                          // Then navigate after a delay
+                          setTimeout(() => {
+                            scrollToSection('adas');
+                          }, 400);
                         }} 
                         className={`text-sm py-2 px-3 block w-full text-left rounded-md
                           ${activeSection === 'adas' 

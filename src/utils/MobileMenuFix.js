@@ -3,6 +3,31 @@
  * This utility helps ensure that the mobile menu works correctly across all devices
  */
 
+// Force body scrolling to be enabled
+export const forceEnableScrolling = () => {
+  document.body.style.overflow = '';
+  document.body.style.overflowY = 'auto';
+  document.body.style.position = 'static';
+  document.documentElement.style.overflow = '';
+  document.documentElement.style.overflowY = 'auto';
+  
+  // Remove any inline styles that might be blocking scrolling
+  const htmlStyles = document.documentElement.getAttribute('style') || '';
+  const bodyStyles = document.body.getAttribute('style') || '';
+  
+  if (htmlStyles.includes('overflow') || htmlStyles.includes('position')) {
+    document.documentElement.style.removeProperty('overflow');
+    document.documentElement.style.removeProperty('overflow-y');
+    document.documentElement.style.removeProperty('position');
+  }
+  
+  if (bodyStyles.includes('overflow') || bodyStyles.includes('position')) {
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('overflow-y');
+    document.body.style.removeProperty('position');
+  }
+};
+
 // Function to be called when the mobile menu opens
 export const fixMobileMenuOnOpen = () => {
   const panel = document.querySelector('.mobile-menu-panel');
@@ -163,8 +188,8 @@ export const fixMobileMenuOnClose = () => {
   if (panel) {
     panel.style.transform = 'translateX(100%)';
     
-    // Re-enable scrolling on body
-    document.body.style.overflow = '';
+    // Re-enable scrolling on body - with force
+    forceEnableScrolling();
   }
   
   if (backdrop) {
@@ -175,6 +200,16 @@ export const fixMobileMenuOnClose = () => {
       if (backdrop) backdrop.style.display = 'none';
     }, 300);
   }
+  
+  // Force overflow reset after a small delay to ensure it happens after transitions
+  setTimeout(() => {
+    forceEnableScrolling();
+  }, 400);
+  
+  // Add a final check to really make sure scrolling is re-enabled
+  setTimeout(() => {
+    forceEnableScrolling();
+  }, 800);
   
   console.log('Mobile menu fix applied - menu closed');
 };
@@ -270,11 +305,14 @@ export const initMobileMenuFix = () => {
   };
 };
 
+
+
 export default {
   fixMobileMenuOnOpen,
   fixMobileMenuOnClose,
   fixTechnicalSubmenu,
   initMobileMenuFix,
   enhanceSubmenuButtons,
-  enhanceMenuContent
+  enhanceMenuContent,
+  forceEnableScrolling
 };
