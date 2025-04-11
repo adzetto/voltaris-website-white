@@ -389,6 +389,97 @@ check_git_status() {
   return 0
 }
 
+# Handle git push errors
+handle_git_push_error() {
+  local error_log=$1
+  local branch=$2
+  
+  # Check if this is a non-fast-forward error
+  if echo "$error_log" | grep -q "non-fast-forward"; then
+    section_title "Git Push Error Detected"
+    
+    echo -e "${YELLOW}${BOLD}Remote repository has changes that aren't in your local repository.${NC}"
+    echo -e "${GRAY}This usually happens when someone else has pushed to the same branch.${NC}\n"
+    
+    echo -e "${CYAN}Options:${NC}"
+    echo -e "  ${GREEN}1)${NC} Pull remote changes and merge (recommended)"
+    echo -e "  ${YELLOW}2)${NC} Force push local changes (overwrites remote changes)"
+    echo -e "  ${RED}3)${NC} Abort the operation"
+    
+    read -p "Choose an option (1-3): " -n 1 -r
+    echo
+    
+    case $REPLY in
+      1)
+        echo -e "${YELLOW}Pulling remote changes...${NC}"
+        
+        # Save current changes to a temporary commit
+        local temp_commit_msg="TEMP: Saving changes before pull $(date '+%Y-%m-%d %H:%M:%S')"
+        git commit --no-verify -m "$temp_commit_msg" > /dev/null 2>&1
+        
+        # Pull with rebase
+        echo -ne "${YELLOW}Pulling changes with rebase... ${NC}"
+        if git pull --rebase origin $branch > /tmp/git-pull.log 2>&1; then
+          echo -e "${GREEN}✓ Successfully pulled changes${NC}"
+          
+          # Try pushing again
+          echo -ne "${YELLOW}Pushing changes... ${NC}"
+          if git push origin $branch > /tmp/git-push-retry.log 2>&1; then
+            echo -e "${GREEN}✓ Push successful${NC}"
+            return 0
+          else
+            echo -e "${RED}✗ Push still failed${NC}"
+            echo -e "${YELLOW}Pull log:${NC}"
+            cat /tmp/git-pull.log
+            echo -e "${YELLOW}Push retry log:${NC}"
+            cat /tmp/git-push-retry.log
+            return 1
+          fi
+        else
+          echo -e "${RED}✗ Pull failed${NC}"
+          echo -e "${YELLOW}You may have merge conflicts to resolve.${NC}"
+          echo -e "${YELLOW}Pull log:${NC}"
+          cat /tmp/git-pull.log
+          return 1
+        fi
+        ;;
+      
+      2)
+        echo -e "${YELLOW}${BOLD}Warning:${NC} Force pushing will overwrite remote changes!"
+        read -p "Are you absolutely sure? (y/N): " -n 1 -r
+        echo
+        
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+          echo -ne "${YELLOW}Force pushing changes... ${NC}"
+          if git push --force origin $branch > /tmp/git-force-push.log 2>&1; then
+            echo -e "${GREEN}✓ Force push successful${NC}"
+            return 0
+          else
+            echo -e "${RED}✗ Force push failed${NC}"
+            echo -e "${YELLOW}Force push log:${NC}"
+            cat /tmp/git-force-push.log
+            return 1
+          fi
+        else
+          echo -e "${YELLOW}Force push cancelled.${NC}"
+          return 1
+        fi
+        ;;
+      
+      3|*)
+        echo -e "${YELLOW}Operation aborted.${NC}"
+        return 1
+        ;;
+    esac
+  else
+    # Some other git error
+    echo -e "${RED}${BOLD}Git push failed with an unknown error.${NC}"
+    echo -e "${YELLOW}Error log:${NC}"
+    echo "$error_log"
+    return 1
+  fi
+}
+
 # =======================
 # FEATURE FUNCTIONS
 # =======================
@@ -727,29 +818,33 @@ deploy_website() {
     branch="$DEFAULT_BRANCH"
   fi
   
-  # Start real push in background
-  git push origin $branch > /tmp/voltaris-push.log 2>&1 &
-  push_pid=$!
+  # Capture push output to a temp file
+  git push origin $branch > /tmp/git-push.log 2>&1
+  push_status=$?
   
-  # Show animated progress while pushing
-  local i=0
-  while kill -0 $push_pid 2>/dev/null; do
-    i=$(( (i+5) % 100 ))
-    progress_bar $i 100 "${stages[3]}"
-    sleep 0.1
+  # Show animated progress during push
+  for i in {1..10}; do
+    progress_bar $((i*10)) 100 "${stages[3]}"
+    sleep 0.05
   done
   
-  # Check if push succeeded
-  if wait $push_pid; then
-    complete_stage $position 4 "${stages[@]}"
-    echo -e "\n${GREEN}✓${NC} Push successful"
+  if [ $push_status -ne 0 ]; then
+    # Read the error log
+    push_error=$(cat /tmp/git-push.log)
+    
+    # Try to handle the error
+    if handle_git_push_error "$push_error" "$branch"; then
+      complete_stage $position 4 "${stages[@]}"
+      echo -e "\n${GREEN}✓ Push successful after resolving conflicts${NC}"
+    else
+      progress_bar 100 100 "${stages[3]}"
+      echo -e "\n${RED}✗ Push failed${NC}"
+      log_event "DEPLOY" "Failed: Git push error"
+      return 1
+    fi
   else
-    progress_bar 100 100 "${stages[3]}"
-    echo -e "\n${RED}✗${NC} Push failed"
-    echo -e "${YELLOW}Push log:${NC}"
-    cat /tmp/voltaris-push.log
-    log_event "DEPLOY" "Failed: Git push error"
-    return 1
+    complete_stage $position 4 "${stages[@]}"
+    echo -e "\n${GREEN}✓ Push successful${NC}"
   fi
   
   # Finalizing
@@ -1020,12 +1115,24 @@ putit_file() {
   # Push to GitHub
   echo -ne "${YELLOW}Pushing to GitHub... ${NC}"
   local branch=$(git branch --show-current)
-  git push origin $branch > /dev/null 2>&1
   
-  if [ $? -ne 0 ]; then
-    echo -e "\r${RED}✗ Push failed. Please check your network connection or repository access.${NC}"
-    log_event "PUTIT" "Failed: Git push error for file $file_path"
-    return 1
+  # Capture push output to a temp file
+  git push origin $branch > /tmp/git-push.log 2>&1
+  push_status=$?
+  
+  if [ $push_status -ne 0 ]; then
+    echo -e "\r${RED}✗ Push failed${NC}"
+    
+    # Read the error log
+    push_error=$(cat /tmp/git-push.log)
+    
+    # Try to handle the error
+    if handle_git_push_error "$push_error" "$branch"; then
+      echo -e "${GREEN}✓ Push successful after resolving conflicts${NC}"
+    else
+      log_event "PUTIT" "Failed: Git push error for file $file_path"
+      return 1
+    fi
   else
     echo -e "\r${GREEN}✓ Push successful${NC}"
   fi

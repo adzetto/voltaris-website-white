@@ -1,0 +1,4 @@
+7711eed277027bed3b00f20ed3ea8ee9c742c6d3
+Your GitHub Username
+Fri Apr 11 21:41:17 2025 +0300
+update .sh files

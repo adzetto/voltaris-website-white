@@ -26,6 +26,12 @@
       "date": "2025-04-11 21:41:15",
       "path": "./voltaris-backups/20250411-214112",
       "description": "Pre-deployment backup"
+    },
+    {
+      "id": "20250411-214457",
+      "date": "2025-04-11 21:44:59",
+      "path": "./voltaris-backups/20250411-214457",
+      "description": "Pre-deployment backup"
     }
   ]
 }
