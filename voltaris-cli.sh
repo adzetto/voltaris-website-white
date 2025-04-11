@@ -104,103 +104,6 @@ progress_bar() {
   # Stay on the same line - don't echo a newline
 }
 
-# Create a multi-stage progress display
-multi_stage_progress() {
-  local stages=("$@")
-  local total_stages=${#stages[@]}
-  local current_stage=0
-  
-  # Create an array to store cursor positions
-  local -a cursor_positions
-  
-  # Print empty progress bars for all stages
-  for stage in "${stages[@]}"; do
-    current_stage=$((current_stage + 1))
-    echo -n "${stage}         "
-    
-    # Save cursor position for this stage
-    tput sc
-    cursor_positions[$current_stage]=$current_stage
-    
-    # Print initial empty progress bar
-    printf "[${GRAY}"
-    printf "%0.s▒" $(seq 1 $PROGRESS_WIDTH)
-    printf "${NC}]   0%%"
-    
-    echo
-  done
-  
-  # Return the array of positions
-  echo "${cursor_positions[@]}"
-}
-
-# Update a stage in the multi-stage display
-update_stage_progress() {
-  local stage_num=$2
-  local progress=$3
-  local total=$4
-  local stages=("${@:5}")
-  
-  local percentage=$((progress * 100 / total))
-  local completed=$((progress * PROGRESS_WIDTH / total))
-  local remaining=$((PROGRESS_WIDTH - completed))
-  
-  # Calculate which line to move to
-  local line_pos=$stage_num
-  
-  # Save current position
-  tput sc
-  
-  # Move to the line for this stage
-  tput cuu $((${#stages[@]} - line_pos + 1))
-  
-  # Move to column position after stage name
-  tput cuf 20
-  
-  # Clear to end of line
-  tput el
-  
-  # Print progress bar
-  printf "[${BLUE}"
-  printf "%0.s█" $(seq 1 $completed)
-  printf "${GRAY}"
-  printf "%0.s▒" $(seq 1 $remaining)
-  printf "${NC}] ${BOLD}%3d%%${NC}" $percentage
-  
-  # Restore cursor position
-  tput rc
-}
-
-# Complete a stage in the multi-stage display
-complete_stage() {
-  local stage_num=$2
-  local stages=("${@:3}")
-  
-  # Update to 100%
-  update_stage_progress 0 $stage_num 1 1 "${stages[@]}"
-}
-
-# Animated task completion
-animated_task() {
-  local message=$1
-  local delay=0.02
-  local i=0
-  
-  # Print message with trailing dots animation
-  printf "${YELLOW}${BOLD}%s${NC}" "$message"
-  
-  for ((i=0; i<3; i++)); do
-    for ((j=0; j<4; j++)); do
-      printf "${CYAN}%s${NC}" "."
-      sleep $delay
-    done
-    printf "\b\b\b\b    \b\b\b\b"
-    sleep $delay
-  done
-  
-  printf "\r${GREEN}${BOLD}%s${NC} ${GREEN}✓${NC}\n" "$message"
-}
-
 # Display a boxed summary
 summary_box() {
   local title=$1
@@ -524,54 +427,28 @@ create_backup() {
   mkdir -p "$backup_path"
   
   # Setup progress tracking
-  local total_files=$((${#BACKUP_FILES[@]} + 2)) # +2 for build dir and git status
+  local total_files=${#BACKUP_FILES[@]}
   local current_file=0
   
-  echo -n "Backing up files     "
-  # Save cursor position for progress updates
-  tput sc
-  
-  # Draw initial empty progress bar
-  local bar_width=70
-  printf "[${GRAY}"
-  printf "%0.s▒" $(seq 1 $bar_width)
-  printf "${NC}]   0%%"
-  echo
-  
-  # Copy critical files with progress
+  # Copy critical files with individual progress indicators
   for file in "${BACKUP_FILES[@]}"; do
     current_file=$((current_file + 1))
-    local percent=$((current_file * 100 / total_files))
-    local filled=$((current_file * bar_width / total_files))
-    local empty=$((bar_width - filled))
+    percent=$((current_file * 100 / (total_files + 2)))  # +2 for build dir and git status
     
-    # Return to saved position and update progress
-    tput rc
-    printf "[${BLUE}"
-    printf "%0.s█" $(seq 1 $filled)
-    printf "${GRAY}"
-    printf "%0.s▒" $(seq 1 $empty)
-    printf "${NC}] ${BOLD}%3d%%${NC}" $percent
+    echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
     
     if [ -f "$file" ]; then
       cp "$file" "$backup_path/"
-      tput el
-      echo -e "\n${GREEN}✓${NC} Backed up $file"
+      echo -e "${GREEN}✓${NC} Backed up $file"
     else
-      tput el
-      echo -e "\n${YELLOW}⚠${NC} File $file not found, skipping"
+      echo -e "${YELLOW}⚠${NC} File $file not found, skipping"
     fi
-    
-    # Return to progress position for next update
-    tput cuu 1
-    tput sc
-    
-    sleep 0.05 # slight delay for visual effect
   done
   
   # Create a snapshot of the build directory if it exists
   current_file=$((current_file + 1))
-  progress_bar $current_file $total_files "Backing up files"
+  percent=$((current_file * 100 / (total_files + 2)))
+  echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
   
   if [ -d "build" ]; then
     animated_task "Backing up build directory"
@@ -583,7 +460,8 @@ create_backup() {
   
   # Store git status
   current_file=$((current_file + 1))
-  progress_bar $current_file $total_files "Backing up files"
+  percent=$((current_file * 100 / (total_files + 2)))
+  echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
   
   git log -1 --format="%H%n%an%n%ad%n%s" > "$backup_path/git-status.txt"
   echo -e "${GREEN}✓${NC} Saved git commit information"
@@ -648,17 +526,15 @@ restore_backup() {
   # Restore files
   for file in "${BACKUP_FILES[@]}"; do
     current_file=$((current_file + 1))
-    printf "\r"
-    progress_bar $current_file $total_files "Restoring files"
+    percent=$((current_file * 100 / total_files))
+    echo -ne "Restoring files... ${YELLOW}$percent%${NC}\r"
     
     if [ -f "$backup_path/$file" ]; then
       cp "$backup_path/$file" "./$file"
-      echo -e "\r${GREEN}✓${NC} Restored $file${CLEAR_LINE}"
+      echo -e "${GREEN}✓${NC} Restored $file"
     else
-      echo -e "\r${YELLOW}⚠${NC} File $file not found in backup, skipping${CLEAR_LINE}"
+      echo -e "${YELLOW}⚠${NC} File $file not found in backup, skipping"
     fi
-    
-    sleep 0.05 # slight delay for visual effect
   done
   
   # Restore build if it exists in the backup
@@ -790,17 +666,12 @@ deploy_website() {
     echo -e "${YELLOW}Skipping backup as requested.${NC}"
   fi
   
-  # Setup deployment stages
-  local stages=("Building" "Git Add" "Committing" "Pushing" "Finalizing")
-  
-  # Initialize multi-stage display
-  echo
-  multi_stage_progress "${stages[@]}"
-  echo
-  
   # Build the project (unless skipped)
   if [ "$skip_build" != "true" ]; then
-    # Start the build process
+    # Start the build process with progress tracking
+    echo -ne "Building... ${YELLOW}0%${NC}\r"
+    
+    # Run the build in background and capture output
     npm run build > /tmp/voltaris-build.log 2>&1 &
     build_pid=$!
     
@@ -808,43 +679,39 @@ deploy_website() {
     local i=0
     while kill -0 $build_pid 2>/dev/null; do
       i=$(( (i+5) % 100 ))
-      update_stage_progress 0 1 $i 100 "${stages[@]}"
+      echo -ne "Building... ${YELLOW}$i%${NC}\r"
       sleep 0.1
     done
     
     # Check if build succeeded
     if wait $build_pid; then
-      complete_stage 0 1 "${stages[@]}"
-      echo -e "\n${GREEN}✓${NC} Build successful"
+      mark_stage_complete "Building"
     else
-      update_stage_progress 0 1 100 100 "${stages[@]}"
-      echo -e "\n${RED}✗${NC} Build failed"
+      mark_stage_failed "Building"
       echo -e "${YELLOW}Build log:${NC}"
       cat /tmp/voltaris-build.log
       log_event "DEPLOY" "Failed: Build error"
       return 1
     fi
   else
-    # Skip build but mark as complete
-    complete_stage 0 1 "${stages[@]}"
-    echo -e "\n${YELLOW}⚠${NC} Build skipped as requested"
+    # Skip build
+    mark_stage_warning "Building" "skipped as requested"
   fi
   
-  # Add all changes to git
-  echo -e "\n${YELLOW}Adding all changes to git...${NC}"
+  # Add changes to git
+  echo -ne "Adding files to git... ${YELLOW}0%${NC}\r"
   for i in {1..10}; do
-    update_stage_progress 0 2 $((i*10)) 100 "${stages[@]}"
+    local progress=$((i*10))
+    echo -ne "Adding files to git... ${YELLOW}$progress%${NC}\r"
     sleep 0.05
   done
   git add .
-  complete_stage 0 2 "${stages[@]}"
+  mark_stage_complete "Adding files to git"
   
   # Get commit message if not provided
   if [ -z "$commit_message" ]; then
-    tput cud 3 # Move down to make space for input
     echo -e "${YELLOW}Please enter a commit message:${NC}"
     read -p "> " commit_message
-    tput cuu 3 # Move back up
     
     if [ -z "$commit_message" ]; then
       commit_message="Update website content $(date '+%Y-%m-%d %H:%M:%S')"
@@ -852,55 +719,56 @@ deploy_website() {
     fi
   fi
   
-  # Commit changes with animation
-  echo -e "\n${YELLOW}Committing changes...${NC}"
+  # Commit changes
+  echo -ne "Committing changes... ${YELLOW}0%${NC}\r"
   for i in {1..10}; do
-    update_stage_progress 0 3 $((i*10)) 100 "${stages[@]}"
+    local progress=$((i*10))
+    echo -ne "Committing changes... ${YELLOW}$progress%${NC}\r"
     sleep 0.05
   done
   git commit -m "$commit_message"
-  complete_stage 0 3 "${stages[@]}"
+  mark_stage_complete "Committing changes"
   
-  # Push to GitHub with animation
-  echo -e "\n${YELLOW}Pushing to GitHub...${NC}"
+  # Push to GitHub
+  echo -ne "Pushing to GitHub... ${YELLOW}0%${NC}\r"
   local branch=$(jq -r '.branch' "$CONFIG_FILE")
   if [ "$branch" == "null" ]; then
     branch="$DEFAULT_BRANCH"
   fi
   
-  # Capture push output to a temp file
+  # Capture push output to temp file
   git push origin $branch > /tmp/git-push.log 2>&1
   push_status=$?
   
-  # Show animated progress during push
+  # Show animated progress for push
   for i in {1..10}; do
-    update_stage_progress 0 4 $((i*10)) 100 "${stages[@]}"
+    local progress=$((i*10))
+    echo -ne "Pushing to GitHub... ${YELLOW}$progress%${NC}\r"
     sleep 0.05
   done
   
+  # Handle push result
   if [ $push_status -ne 0 ]; then
     # Read the error log
     push_error=$(cat /tmp/git-push.log)
     
     # Try to handle the error
     if handle_git_push_error "$push_error" "$branch"; then
-      complete_stage 0 4 "${stages[@]}"
-      echo -e "\n${GREEN}✓ Push successful after resolving conflicts${NC}"
+      mark_stage_complete "Pushing to GitHub"
     else
-      update_stage_progress 0 4 100 100 "${stages[@]}"
-      echo -e "\n${RED}✗ Push failed${NC}"
+      mark_stage_failed "Pushing to GitHub"
       log_event "DEPLOY" "Failed: Git push error"
       return 1
     fi
   else
-    complete_stage 0 4 "${stages[@]}"
-    echo -e "\n${GREEN}✓ Push successful${NC}"
+    mark_stage_complete "Pushing to GitHub"
   fi
   
   # Finalizing
-  echo -e "\n${YELLOW}Finalizing deployment...${NC}"
+  echo -ne "Finalizing deployment... ${YELLOW}0%${NC}\r"
   for i in {1..10}; do
-    update_stage_progress 0 5 $((i*10)) 100 "${stages[@]}"
+    local progress=$((i*10))
+    echo -ne "Finalizing deployment... ${YELLOW}$progress%${NC}\r"
     sleep 0.05
   done
   
@@ -914,7 +782,7 @@ deploy_website() {
   
   # Log the event
   log_event "DEPLOY" "Success: $commit_message"
-  complete_stage 0 5 "${stages[@]}"
+  mark_stage_complete "Finalizing deployment"
   
   # Deployment complete
   summary_box "Deployment Complete!"
@@ -1129,16 +997,14 @@ putit_file() {
   
   # Add the file to git
   echo -e "${YELLOW}Adding file to git: ${CYAN}$file_path${NC}"
-  
-  # Display a simple animated indicator
-  echo -ne "${YELLOW}Git adding file... ${NC}"
+  echo -ne "Git adding file... ${YELLOW}0%${NC}\r"
   git add "$file_path" > /dev/null 2>&1
   
   if [ $? -ne 0 ]; then
-    echo -e "\r${CLEAR_LINE}${RED}✗ Failed to add file to git${NC}"
+    echo -e "${RED}✗ Failed to add file to git${NC}"
     return 1
   else
-    echo -e "\r${CLEAR_LINE}${GREEN}✓ File added to git${NC}"
+    echo -e "${GREEN}✓ File added to git${NC}"
   fi
 
   # Get commit message if not provided
@@ -1153,26 +1019,38 @@ putit_file() {
   fi
   
   # Commit the file
-  echo -ne "${YELLOW}Committing changes... ${NC}"
+  echo -ne "Committing changes... ${YELLOW}0%${NC}\r"
+  for i in {1..5}; do
+    progress=$((i*20))
+    echo -ne "Committing changes... ${YELLOW}$progress%${NC}\r"
+    sleep 0.05
+  done
   git commit -m "$commit_message" > /dev/null 2>&1
   
   if [ $? -ne 0 ]; then
-    echo -e "\r${CLEAR_LINE}${RED}✗ Failed to commit changes${NC}"
+    echo -e "${RED}✗ Failed to commit changes${NC}"
     return 1
   else
-    echo -e "\r${CLEAR_LINE}${GREEN}✓ Changes committed${NC}"
+    echo -e "${GREEN}✓ Changes committed${NC}"
   fi
   
   # Push to GitHub
-  echo -ne "${YELLOW}Pushing to GitHub... ${NC}"
+  echo -ne "Pushing to GitHub... ${YELLOW}0%${NC}\r"
   local branch=$(git branch --show-current)
   
   # Capture push output to a temp file
   git push origin $branch > /tmp/git-push.log 2>&1
   push_status=$?
   
+  # Show progress animation
+  for i in {1..5}; do
+    progress=$((i*20))
+    echo -ne "Pushing to GitHub... ${YELLOW}$progress%${NC}\r"
+    sleep 0.05
+  done
+  
   if [ $push_status -ne 0 ]; then
-    echo -e "\r${CLEAR_LINE}${RED}✗ Push failed${NC}"
+    echo -e "${RED}✗ Push failed${NC}"
     
     # Read the error log
     push_error=$(cat /tmp/git-push.log)
@@ -1185,7 +1063,7 @@ putit_file() {
       return 1
     fi
   else
-    echo -e "\r${CLEAR_LINE}${GREEN}✓ Push successful${NC}"
+    echo -e "${GREEN}✓ Push successful${NC}"
   fi
   
   # Log the event
@@ -1200,6 +1078,55 @@ putit_file() {
   close_summary_box
   
   return 0
+}
+
+# Simple progress indicator for a single stage
+show_stage_progress() {
+  local stage=$1
+  local progress=$2  # 0-100
+  
+  # Print stage name and progress
+  echo -ne "${stage}... ${YELLOW}$progress%${NC}\r"
+}
+
+# Mark a stage as complete
+mark_stage_complete() {
+  local stage=$1
+  echo -e "${stage}... ${GREEN}completed ✓${NC}"
+}
+
+# Mark a stage as failed
+mark_stage_failed() {
+  local stage=$1
+  echo -e "${stage}... ${RED}failed ✗${NC}"
+}
+
+# Show a warning for a stage
+mark_stage_warning() {
+  local stage=$1
+  local message=$2
+  echo -e "${stage}... ${YELLOW}$message${NC}"
+}
+
+# Animated task completion
+animated_task() {
+  local message=$1
+  local delay=0.02
+  local i=0
+  
+  # Print message with trailing dots animation
+  printf "${YELLOW}${BOLD}%s${NC}" "$message"
+  
+  for ((i=0; i<3; i++)); do
+    for ((j=0; j<4; j++)); do
+      printf "${CYAN}%s${NC}" "."
+      sleep $delay
+    done
+    printf "\b\b\b\b    \b\b\b\b"
+    sleep $delay
+  done
+  
+  printf "\r${GREEN}${BOLD}%s${NC} ${GREEN}✓${NC}\n" "$message"
 }
 
 # =======================
