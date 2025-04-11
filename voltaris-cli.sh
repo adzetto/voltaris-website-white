@@ -20,6 +20,7 @@ CYAN='\033[0;36m'
 GRAY='\033[0;37m'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
+CLEAR_LINE='\033[K' # Clear line from cursor position to the end
 
 # Terminal width for progress bars
 TERM_WIDTH=$(tput cols 2>/dev/null || echo 80)
@@ -85,7 +86,7 @@ progress_bar() {
   local remaining=$((PROGRESS_WIDTH - completed))
   
   # Clear line and move to start
-  printf "\r"
+  printf "\r${CLEAR_LINE}"
   
   # Print title with fixed width
   printf "%-20s " "${title}"
@@ -348,6 +349,7 @@ check_dependencies() {
     current=$((current + 1))
     
     for i in {1..5}; do
+      printf "\r"
       progress_bar $i 5 "Checking $dep"
       sleep 0.05
     done
@@ -505,9 +507,11 @@ create_backup() {
     
     if [ -f "$file" ]; then
       cp "$file" "$backup_path/"
+      printf "\r"
       progress_bar $current_file $total_files "Backing up files"
       echo -e "\r${GREEN}✓${NC} Backed up $file${CLEAR_LINE}"
     else
+      printf "\r"
       progress_bar $current_file $total_files "Backing up files"
       echo -e "\r${YELLOW}⚠${NC} File $file not found, skipping${CLEAR_LINE}"
     fi
@@ -594,6 +598,7 @@ restore_backup() {
   # Restore files
   for file in "${BACKUP_FILES[@]}"; do
     current_file=$((current_file + 1))
+    printf "\r"
     progress_bar $current_file $total_files "Restoring files"
     
     if [ -f "$backup_path/$file" ]; then
@@ -649,6 +654,7 @@ list_backups() {
   jq -r '.backups[] | "\(.id) \(.date) \(.description)"' "$CONFIG_FILE" | \
   while read -r id date description; do
     current=$((current + 1))
+    printf "\r"
     progress_bar $current $backup_count "Loading backups"
     printf "\r${GRAY}%-20s │ %-25s │ %-40s${NC}\n" "$id" "$date" "$description"
     
@@ -686,6 +692,7 @@ show_history() {
     local current=0
     echo "$log_entries" | while read -r line; do
       current=$((current + 1))
+      printf "\r"
       progress_bar $current $log_count "Loading history"
       echo -e "\r${GRAY}$line${NC}"
       
@@ -783,6 +790,7 @@ deploy_website() {
   # Add all changes to git
   echo -e "\n${YELLOW}Adding all changes to git...${NC}"
   for i in {1..10}; do
+    printf "\r${CLEAR_LINE}"
     progress_bar $((i*10)) 100 "${stages[1]}"
     sleep 0.05
   done
@@ -805,6 +813,7 @@ deploy_website() {
   # Commit changes with animation
   echo -e "\n${YELLOW}Committing changes...${NC}"
   for i in {1..10}; do
+    printf "\r${CLEAR_LINE}"
     progress_bar $((i*10)) 100 "${stages[2]}"
     sleep 0.05
   done
@@ -824,6 +833,7 @@ deploy_website() {
   
   # Show animated progress during push
   for i in {1..10}; do
+    printf "\r${CLEAR_LINE}"
     progress_bar $((i*10)) 100 "${stages[3]}"
     sleep 0.05
   done
@@ -837,6 +847,7 @@ deploy_website() {
       complete_stage $position 4 "${stages[@]}"
       echo -e "\n${GREEN}✓ Push successful after resolving conflicts${NC}"
     else
+      printf "\r${CLEAR_LINE}"
       progress_bar 100 100 "${stages[3]}"
       echo -e "\n${RED}✗ Push failed${NC}"
       log_event "DEPLOY" "Failed: Git push error"
@@ -850,6 +861,7 @@ deploy_website() {
   # Finalizing
   echo -e "\n${YELLOW}Finalizing deployment...${NC}"
   for i in {1..10}; do
+    printf "\r${CLEAR_LINE}"
     progress_bar $((i*10)) 100 "${stages[4]}"
     sleep 0.05
   done
@@ -912,6 +924,7 @@ show_logs() {
   local current=0
   tail -n "$lines" "$latest_log" | while read -r line; do
     current=$((current + 1))
+    printf "\r"
     progress_bar $current $lines "Loading logs"
     
     if [[ "$line" == *"[DEPLOY]"* ]]; then
@@ -1084,10 +1097,10 @@ putit_file() {
   git add "$file_path" > /dev/null 2>&1
   
   if [ $? -ne 0 ]; then
-    echo -e "\r${RED}✗ Failed to add file to git${NC}"
+    echo -e "\r${CLEAR_LINE}${RED}✗ Failed to add file to git${NC}"
     return 1
   else
-    echo -e "\r${GREEN}✓ File added to git${NC}"
+    echo -e "\r${CLEAR_LINE}${GREEN}✓ File added to git${NC}"
   fi
 
   # Get commit message if not provided
@@ -1106,10 +1119,10 @@ putit_file() {
   git commit -m "$commit_message" > /dev/null 2>&1
   
   if [ $? -ne 0 ]; then
-    echo -e "\r${RED}✗ Failed to commit changes${NC}"
+    echo -e "\r${CLEAR_LINE}${RED}✗ Failed to commit changes${NC}"
     return 1
   else
-    echo -e "\r${GREEN}✓ Changes committed${NC}"
+    echo -e "\r${CLEAR_LINE}${GREEN}✓ Changes committed${NC}"
   fi
   
   # Push to GitHub
@@ -1121,7 +1134,7 @@ putit_file() {
   push_status=$?
   
   if [ $push_status -ne 0 ]; then
-    echo -e "\r${RED}✗ Push failed${NC}"
+    echo -e "\r${CLEAR_LINE}${RED}✗ Push failed${NC}"
     
     # Read the error log
     push_error=$(cat /tmp/git-push.log)
@@ -1134,7 +1147,7 @@ putit_file() {
       return 1
     fi
   else
-    echo -e "\r${GREEN}✓ Push successful${NC}"
+    echo -e "\r${CLEAR_LINE}${GREEN}✓ Push successful${NC}"
   fi
   
   # Log the event
