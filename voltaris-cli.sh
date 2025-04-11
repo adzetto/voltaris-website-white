@@ -866,6 +866,7 @@ show_help() {
   echo -e "  ${GREEN}history${NC}   Show deployment history"
   echo -e "  ${GREEN}logs${NC}      Show recent logs"
   echo -e "  ${GREEN}status${NC}    Show current project status"
+  echo -e "  ${GREEN}putit${NC}     Quick update of a single file"
   echo -e "  ${GREEN}help${NC}      Show this help message\n"
   
   echo -e "${BLUE}${BOLD}OPTIONS:${NC}"
@@ -883,11 +884,16 @@ show_help() {
   echo -e "  ${GREEN}logs${NC}"
   echo -e "    ${YELLOW}-n, --lines${NC}       Number of log lines to show (default: 20)\n"
   
+  echo -e "  ${GREEN}putit${NC}"
+  echo -e "    ${YELLOW}-f, --file${NC}        Specify file path to update"
+  echo -e "    ${YELLOW}-m, --message${NC}     Specify commit message\n"
+  
   echo -e "${BLUE}${BOLD}EXAMPLES:${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh deploy -m \"Updated home page\"${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh backup -d \"Before major changes\"${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh restore 20230415-123045${NC}"
-  echo -e "  ${GRAY}./voltaris-cli.sh logs -n 50${NC}\n"
+  echo -e "  ${GRAY}./voltaris-cli.sh logs -n 50${NC}"
+  echo -e "  ${GRAY}./voltaris-cli.sh putit -f src/index.js -m \"Fixed navigation bug\"${NC}\n"
   
   return 0
 }
@@ -958,6 +964,82 @@ show_status() {
   else
     echo -e "${GREEN}All dependencies are up to date.${NC}"
   fi
+  
+  return 0
+}
+
+# Quick single file update function
+putit_file() {
+  local file_path=$1
+  local commit_message=$2
+  
+  section_title "Quick File Update"
+  
+  # Check if file exists
+  if [ ! -f "$file_path" ]; then
+    echo -e "${RED}${BOLD}Error: File not found: $file_path${NC}"
+    return 1
+  fi
+  
+  # Add the file to git
+  echo -e "${YELLOW}Adding file to git: ${CYAN}$file_path${NC}"
+  
+  # Display a simple animated indicator
+  echo -ne "${YELLOW}Git adding file... ${NC}"
+  git add "$file_path" > /dev/null 2>&1
+  
+  if [ $? -ne 0 ]; then
+    echo -e "\r${RED}✗ Failed to add file to git${NC}"
+    return 1
+  else
+    echo -e "\r${GREEN}✓ File added to git${NC}"
+  fi
+
+  # Get commit message if not provided
+  if [ -z "$commit_message" ]; then
+    echo -e "${YELLOW}Please enter a commit message:${NC}"
+    read -p "> " commit_message
+    
+    if [ -z "$commit_message" ]; then
+      commit_message="Update file $file_path $(date '+%Y-%m-%d %H:%M:%S')"
+      echo -e "${YELLOW}No message provided. Using default: ${NC}${commit_message}"
+    fi
+  fi
+  
+  # Commit the file
+  echo -ne "${YELLOW}Committing changes... ${NC}"
+  git commit -m "$commit_message" > /dev/null 2>&1
+  
+  if [ $? -ne 0 ]; then
+    echo -e "\r${RED}✗ Failed to commit changes${NC}"
+    return 1
+  else
+    echo -e "\r${GREEN}✓ Changes committed${NC}"
+  fi
+  
+  # Push to GitHub
+  echo -ne "${YELLOW}Pushing to GitHub... ${NC}"
+  local branch=$(git branch --show-current)
+  git push origin $branch > /dev/null 2>&1
+  
+  if [ $? -ne 0 ]; then
+    echo -e "\r${RED}✗ Push failed. Please check your network connection or repository access.${NC}"
+    log_event "PUTIT" "Failed: Git push error for file $file_path"
+    return 1
+  else
+    echo -e "\r${GREEN}✓ Push successful${NC}"
+  fi
+  
+  # Log the event
+  log_event "PUTIT" "Successfully updated file: $file_path with message: $commit_message"
+  
+  # Display summary
+  summary_box "File Update Complete"
+  echo -e "  ${BOLD}File:${NC} ${CYAN}$file_path${NC}"
+  echo -e "  ${BOLD}Commit:${NC} ${CYAN}$commit_message${NC}"
+  echo -e "  ${BOLD}Branch:${NC} ${CYAN}$branch${NC}"
+  echo -e "  ${BOLD}Time:${NC} ${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
+  close_summary_box
   
   return 0
 }
@@ -1134,6 +1216,48 @@ case $COMMAND in
     
   help)
     show_help
+    ;;
+    
+  putit)
+    # Process putit options
+    FILE_PATH=""
+    COMMIT_MESSAGE=""
+    
+    while [[ $# -gt 0 ]]; do
+      case $1 in
+        -f|--file)
+          FILE_PATH="$2"
+          shift 2
+          ;;
+        -m|--message)
+          COMMIT_MESSAGE="$2"
+          shift 2
+          ;;
+        *)
+          echo -e "${RED}Unknown option: $1${NC}"
+          show_help
+          exit 1
+          ;;
+      esac
+    done
+    
+    if [ -z "$FILE_PATH" ]; then
+      echo -e "${RED}Error: File path is required.${NC}"
+      echo -e "Usage: ${CYAN}./voltaris-cli.sh putit -f <file_path> -m \"commit message\"${NC}"
+      exit 1
+    fi
+    
+    # Clear screen for better UI
+    clear
+    
+    # Check dependencies
+    check_dependencies
+    
+    # Initialize environment
+    initialize
+    
+    # Update single file
+    putit_file "$FILE_PATH" "$COMMIT_MESSAGE"
     ;;
     
   *)

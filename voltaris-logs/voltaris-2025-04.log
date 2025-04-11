@@ -3,3 +3,5 @@
 [2025-04-11 21:05:13] [BACKUP] Created backup 20250411-210510: Pre-deployment backup
 [2025-04-11 21:06:03] [DEPLOY] Success: color and scrolling issue fixed
 [2025-04-11 21:21:56] [BACKUP] Created backup 20250411-212154: Pre-deployment backup
+[2025-04-11 21:22:50] [DEPLOY] Success: .sh files added
+[2025-04-11 21:41:15] [BACKUP] Created backup 20250411-214112: Pre-deployment backup
