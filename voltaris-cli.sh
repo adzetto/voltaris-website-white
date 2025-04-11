@@ -44,6 +44,16 @@ BACKUP_FILES=(
   "webpack.config.js"
 )
 
+# Directories to exclude when doing a full project backup
+EXCLUDE_DIRS=(
+  "node_modules"
+  "build"
+  "dist"
+  ".git"
+  "voltaris-backups"
+  "voltaris-logs"
+)
+
 # =======================
 # ADVANCED PROGRESS DISPLAY FUNCTIONS
 # =======================
@@ -418,70 +428,122 @@ handle_git_push_error() {
 # Create a backup
 create_backup() {
   local description=$1
+  local full_backup=$2
   local backup_id=$(date '+%Y%m%d-%H%M%S')
   local backup_path="$BACKUP_DIR/$backup_id"
   
-  section_title "Creating backup $backup_id"
+  if [ "$full_backup" == "true" ]; then
+    section_title "Creating full project backup $backup_id"
+  else
+    section_title "Creating backup $backup_id"
+  fi
   
   # Create backup directory
   mkdir -p "$backup_path"
   
-  # Setup progress tracking
-  local total_files=${#BACKUP_FILES[@]}
-  local current_file=0
-  
-  # Copy critical files with individual progress indicators
-  for file in "${BACKUP_FILES[@]}"; do
-    current_file=$((current_file + 1))
-    percent=$((current_file * 100 / (total_files + 2)))  # +2 for build dir and git status
+  if [ "$full_backup" == "true" ]; then
+    # Full project backup
+    echo -e "${YELLOW}Starting full project backup...${NC}"
+    echo -ne "Backing up project... ${YELLOW}0%${NC}\r"
     
+    # Build exclude parameters
+    local exclude_params=""
+    for dir in "${EXCLUDE_DIRS[@]}"; do
+      exclude_params="$exclude_params --exclude=$dir"
+    done
+    
+    # Create tar archive with progress simulation
+    tar -cf "$backup_path/project.tar" $exclude_params . > /dev/null 2>&1 &
+    tar_pid=$!
+    
+    # Show progress animation
+    local i=0
+    while kill -0 $tar_pid 2>/dev/null; do
+      i=$(( (i+2) % 100 ))
+      echo -ne "Backing up project... ${YELLOW}$i%${NC}\r"
+      sleep 0.1
+    done
+    
+    # Check if tar succeeded
+    if wait $tar_pid; then
+      echo -e "Backing up project... ${GREEN}completed ✓${NC}"
+      echo -e "${GREEN}✓${NC} Full project backup created"
+    else
+      echo -e "${RED}✗${NC} Failed to create full project backup"
+      rm -rf "$backup_path"
+      return 1
+    fi
+  else
+    # Setup progress tracking for regular backup
+    local total_files=${#BACKUP_FILES[@]}
+    local current_file=0
+    
+    # Copy critical files with individual progress indicators
+    for file in "${BACKUP_FILES[@]}"; do
+      current_file=$((current_file + 1))
+      percent=$((current_file * 100 / (total_files + 2)))  # +2 for build dir and git status
+      
+      echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
+      
+      if [ -f "$file" ]; then
+        cp "$file" "$backup_path/"
+        echo -e "${GREEN}✓${NC} Backed up $file"
+      else
+        echo -e "${YELLOW}⚠${NC} File $file not found, skipping"
+      fi
+    done
+    
+    # Create a snapshot of the build directory if it exists
+    current_file=$((current_file + 1))
+    percent=$((current_file * 100 / (total_files + 2)))
     echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
     
-    if [ -f "$file" ]; then
-      cp "$file" "$backup_path/"
-      echo -e "${GREEN}✓${NC} Backed up $file"
+    if [ -d "build" ]; then
+      animated_task "Backing up build directory"
+      mkdir -p "$backup_path/build"
+      cp -r build/* "$backup_path/build/"
     else
-      echo -e "${YELLOW}⚠${NC} File $file not found, skipping"
+      echo -e "${YELLOW}⚠${NC} Build directory not found, skipping"
     fi
-  done
-  
-  # Create a snapshot of the build directory if it exists
-  current_file=$((current_file + 1))
-  percent=$((current_file * 100 / (total_files + 2)))
-  echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
-  
-  if [ -d "build" ]; then
-    animated_task "Backing up build directory"
-    mkdir -p "$backup_path/build"
-    cp -r build/* "$backup_path/build/"
-  else
-    echo -e "${YELLOW}⚠${NC} Build directory not found, skipping"
+    
+    # Store git status
+    current_file=$((current_file + 1))
+    percent=$((current_file * 100 / (total_files + 2)))
+    echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
+    
+    git log -1 --format="%H%n%an%n%ad%n%s" > "$backup_path/git-status.txt"
+    echo -e "${GREEN}✓${NC} Saved git commit information"
   fi
-  
-  # Store git status
-  current_file=$((current_file + 1))
-  percent=$((current_file * 100 / (total_files + 2)))
-  echo -ne "Backing up files... ${YELLOW}$percent%${NC}\r"
-  
-  git log -1 --format="%H%n%an%n%ad%n%s" > "$backup_path/git-status.txt"
-  echo -e "${GREEN}✓${NC} Saved git commit information"
   
   # Update config with backup info
   if [ -z "$description" ]; then
-    description="Automated backup"
+    if [ "$full_backup" == "true" ]; then
+      description="Full project backup"
+    else
+      description="Automated backup"
+    fi
   fi
   
   animated_task "Updating backup registry"
   add_backup_entry "$backup_id" "$backup_path" "$description"
   
   # Log the event
-  log_event "BACKUP" "Created backup $backup_id: $description"
+  if [ "$full_backup" == "true" ]; then
+    log_event "BACKUP" "Created full project backup $backup_id: $description"
+  else
+    log_event "BACKUP" "Created backup $backup_id: $description"
+  fi
   
   summary_box "Backup Summary"
   echo -e "  ${BOLD}Backup ID:${NC} ${CYAN}$backup_id${NC}"
   echo -e "  ${BOLD}Description:${NC} ${CYAN}$description${NC}"
   echo -e "  ${BOLD}Location:${NC} ${CYAN}$backup_path${NC}"
-  echo -e "  ${BOLD}Files backed up:${NC} ${CYAN}$current_file${NC}"
+  if [ "$full_backup" == "true" ]; then
+    echo -e "  ${BOLD}Type:${NC} ${CYAN}Full project${NC}"
+    echo -e "  ${BOLD}Size:${NC} ${CYAN}$(du -h "$backup_path/project.tar" | cut -f1)${NC}"
+  else
+    echo -e "  ${BOLD}Files backed up:${NC} ${CYAN}$current_file${NC}"
+  fi
   echo -e "  ${BOLD}Time:${NC} ${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
   close_summary_box
   
@@ -505,9 +567,16 @@ restore_backup() {
     return 1
   fi
   
-  section_title "Restoring from backup $backup_id"
+  # Check if this is a full project backup
+  local is_full_backup=false
+  if [ -f "$backup_path/project.tar" ]; then
+    is_full_backup=true
+    section_title "Restoring full project backup $backup_id"
+  else
+    section_title "Restoring from backup $backup_id"
+  fi
   
-  echo -e "${YELLOW}${BOLD}Warning: This will overwrite your current configuration files!${NC}"
+  echo -e "${YELLOW}${BOLD}Warning: This will overwrite your $([[ $is_full_backup == true ]] && echo "entire project" || echo "current configuration files")!${NC}"
   read -p "Are you sure you want to continue? (y/N) " -n 1 -r
   echo
   if [[ ! $REPLY =~ ^[Yy]$ ]]; then
@@ -517,44 +586,79 @@ restore_backup() {
   
   # First create a backup of the current state
   animated_task "Creating safety backup before restore"
-  create_backup "Pre-restore safety backup"
+  create_backup "Pre-restore safety backup" false
   
-  # Setup progress tracking
-  local total_files=${#BACKUP_FILES[@]}
-  local current_file=0
-  
-  # Restore files
-  for file in "${BACKUP_FILES[@]}"; do
-    current_file=$((current_file + 1))
-    percent=$((current_file * 100 / total_files))
-    echo -ne "Restoring files... ${YELLOW}$percent%${NC}\r"
+  if [ "$is_full_backup" == "true" ]; then
+    # Restore full project backup
+    echo -e "${YELLOW}Restoring full project backup...${NC}"
+    echo -ne "Extracting project... ${YELLOW}0%${NC}\r"
     
-    if [ -f "$backup_path/$file" ]; then
-      cp "$backup_path/$file" "./$file"
-      echo -e "${GREEN}✓${NC} Restored $file"
+    # Extract tar archive with progress simulation
+    tar -xf "$backup_path/project.tar" -C . > /dev/null 2>&1 &
+    tar_pid=$!
+    
+    # Show progress animation
+    local i=0
+    while kill -0 $tar_pid 2>/dev/null; do
+      i=$(( (i+2) % 100 ))
+      echo -ne "Extracting project... ${YELLOW}$i%${NC}\r"
+      sleep 0.1
+    done
+    
+    # Check if tar succeeded
+    if wait $tar_pid; then
+      echo -e "Extracting project... ${GREEN}completed ✓${NC}"
+      echo -e "${GREEN}✓${NC} Full project restored"
     else
-      echo -e "${YELLOW}⚠${NC} File $file not found in backup, skipping"
+      echo -e "${RED}✗${NC} Failed to restore full project"
+      return 1
     fi
-  done
-  
-  # Restore build if it exists in the backup
-  if [ -d "$backup_path/build" ]; then
-    animated_task "Restoring build directory"
-    rm -rf ./build
-    mkdir -p ./build
-    cp -r "$backup_path/build"/* ./build/
   else
-    echo -e "${YELLOW}⚠${NC} Build directory not found in backup, skipping"
+    # Setup progress tracking for regular restore
+    local total_files=${#BACKUP_FILES[@]}
+    local current_file=0
+    
+    # Restore files
+    for file in "${BACKUP_FILES[@]}"; do
+      current_file=$((current_file + 1))
+      percent=$((current_file * 100 / total_files))
+      echo -ne "Restoring files... ${YELLOW}$percent%${NC}\r"
+      
+      if [ -f "$backup_path/$file" ]; then
+        cp "$backup_path/$file" "./$file"
+        echo -e "${GREEN}✓${NC} Restored $file"
+      else
+        echo -e "${YELLOW}⚠${NC} File $file not found in backup, skipping"
+      fi
+    done
+    
+    # Restore build if it exists in the backup
+    if [ -d "$backup_path/build" ]; then
+      animated_task "Restoring build directory"
+      rm -rf ./build
+      mkdir -p ./build
+      cp -r "$backup_path/build"/* ./build/
+    else
+      echo -e "${YELLOW}⚠${NC} Build directory not found in backup, skipping"
+    fi
   fi
   
   # Log the event
-  log_event "RESTORE" "Restored from backup $backup_id"
+  if [ "$is_full_backup" == "true" ]; then
+    log_event "RESTORE" "Restored full project from backup $backup_id"
+  else
+    log_event "RESTORE" "Restored from backup $backup_id"
+  fi
   
   summary_box "Restoration Complete"
   echo -e "  ${BOLD}Restored from:${NC} ${CYAN}$backup_id${NC}"
-  echo -e "  ${BOLD}Files restored:${NC} ${CYAN}$current_file${NC}"
+  if [ "$is_full_backup" == "true" ]; then
+    echo -e "  ${BOLD}Type:${NC} ${CYAN}Full project${NC}"
+  else
+    echo -e "  ${BOLD}Files restored:${NC} ${CYAN}$current_file${NC}"
+    echo -e "  ${YELLOW}Note: This only restored configuration files, not your source code.${NC}"
+  fi
   echo -e "  ${BOLD}Time:${NC} ${CYAN}$(date '+%Y-%m-%d %H:%M:%S')${NC}"
-  echo -e "  ${YELLOW}Note: This only restored configuration files, not your source code.${NC}"
   close_summary_box
   
   return 0
@@ -890,7 +994,8 @@ show_help() {
   echo -e "    ${YELLOW}-n, --no-backup${NC}  Skip creating a backup\n"
   
   echo -e "  ${GREEN}backup${NC}"
-  echo -e "    ${YELLOW}-d, --description${NC} Specify backup description\n"
+  echo -e "    ${YELLOW}-d, --description${NC} Specify backup description"
+  echo -e "    ${YELLOW}-f, --full${NC}        Create a full project backup\n"
   
   echo -e "  ${GREEN}restore${NC}"
   echo -e "    ${YELLOW}<backup-id>${NC}       ID of the backup to restore\n"
@@ -905,6 +1010,7 @@ show_help() {
   echo -e "${BLUE}${BOLD}EXAMPLES:${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh deploy -m \"Updated home page\"${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh backup -d \"Before major changes\"${NC}"
+  echo -e "  ${GRAY}./voltaris-cli.sh backup -f -d \"Full project backup\"${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh restore 20230415-123045${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh logs -n 50${NC}"
   echo -e "  ${GRAY}./voltaris-cli.sh putit -f src/index.js -m \"Fixed navigation bug\"${NC}\n"
@@ -1182,12 +1288,17 @@ case $COMMAND in
   backup)
     # Process backup options
     DESCRIPTION=""
+    FULL_BACKUP=false
     
     while [[ $# -gt 0 ]]; do
       case $1 in
         -d|--description)
           DESCRIPTION="$2"
           shift 2
+          ;;
+        -f|--full)
+          FULL_BACKUP=true
+          shift
           ;;
         *)
           echo -e "${RED}Unknown option: $1${NC}"
@@ -1207,7 +1318,7 @@ case $COMMAND in
     initialize
     
     # Create backup
-    create_backup "$DESCRIPTION"
+    create_backup "$DESCRIPTION" "$FULL_BACKUP"
     ;;
     
   restore)
