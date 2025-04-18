@@ -1,14 +1,8 @@
 {
   "branch": "main",
-  "last_deployment": "2025-04-11 22:00:20",
-  "total_deployments": 9,
+  "last_deployment": "2025-04-11 22:05:24",
+  "total_deployments": 10,
   "backups": [
-    {
-      "id": "20250411-210510",
-      "date": "2025-04-11 21:05:12",
-      "path": "./voltaris-backups/20250411-210510",
-      "description": "Pre-deployment backup"
-    },
     {
       "id": "20250411-212154",
       "date": "2025-04-11 21:21:56",
@@ -61,6 +55,12 @@
       "id": "20250411-220426",
       "date": "2025-04-11 22:04:28",
       "path": "./voltaris-backups/20250411-220426",
+      "description": "Pre-deployment backup"
+    },
+    {
+      "id": "20250418-132611",
+      "date": "2025-04-18 13:26:14",
+      "path": "./voltaris-backups/20250418-132611",
       "description": "Pre-deployment backup"
     }
   ]
