@@ -422,8 +422,6 @@
 }
 
 .sponsor-item {
-  width: 150px;
-  margin-right: 30px;
   flex-shrink: 0;
 }
 
@@ -438,6 +436,27 @@
 
 .sponsor-track:hover {
   animation-play-state: paused;
+}
+
+/* Responsive sponsor styling */
+@media (max-width: 640px) {
+  .sponsor-carousel {
+    padding: 10px 0;
+  }
+  
+  .sponsor-track {
+    animation-duration: 30s !important; /* Slower on mobile */
+  }
+  
+  .sponsor-item {
+    margin-right: 15px;
+    margin-left: 15px;
+  }
+  
+  .sponsor-showcase img {
+    max-width: 80px !important;
+    max-height: 40px !important;
+  }
 }
 
 /* Sponsor tier highlights */

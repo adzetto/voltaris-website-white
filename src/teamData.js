@@ -427,6 +427,20 @@ const sponsorData = [
     logo: `${process.env.PUBLIC_URL}/sponsors/tekyaz_logo.svg`,
     tier: "gold",
     website: "https://tekyaz.com/"
+  },
+  {
+    id: 5,
+    name: "Habaş",
+    logo: `${process.env.PUBLIC_URL}/sponsors/habas-logo.jpg`,
+    tier: "gold",
+    website: "https://www.habas.com.tr/"
+  },
+  {
+    id: 6,
+    name: "Cevher Jant",
+    logo: `${process.env.PUBLIC_URL}/sponsors/cevherjant.png`,
+    tier: "silver",
+    website: "https://www.cevher.com/"
   }
 ];
 

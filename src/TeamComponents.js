@@ -545,16 +545,16 @@ export const TeamStats = () => {
 // Sponsor showcase component for hero section
 export const SponsorShowcase = ({ sponsors }) => {
   return (
-    <div className="sponsor-showcase rounded-lg bg-white dark:bg-voltaris-neutral-50 backdrop-blur-sm border border-gray-200 dark:border-voltaris-neutral-300 overflow-hidden p-4 mx-auto max-w-3xl shadow-lg">
-      <h3 className="text-xl font-bold mb-4 text-center text-gradient-red-blue">Sponsorlarımız</h3>
+    <div className="sponsor-showcase rounded-lg bg-white dark:bg-voltaris-neutral-50 backdrop-blur-sm border border-gray-200 dark:border-voltaris-neutral-300 overflow-hidden p-2 sm:p-4 mx-auto max-w-xs sm:max-w-2xl md:max-w-3xl shadow-lg">
+      <h3 className="text-lg sm:text-xl font-bold mb-2 sm:mb-4 text-center text-gradient-red-blue">Sponsorlarımız</h3>
       
-      <div className="sponsor-carousel">
+      <div className="sponsor-carousel overflow-hidden">
         <div className="sponsor-track flex animate-sponsorSlide">
           {/* Double the sponsors for infinite loop effect */}
           {[...sponsors, ...sponsors].map((sponsor, index) => (
             <div 
               key={`${sponsor.id}-${index}`} 
-              className="flex-shrink-0 px-6 flex items-center justify-center sponsor-item"
+              className="flex-shrink-0 px-2 sm:px-4 md:px-6 flex items-center justify-center sponsor-item"
             >
               <a 
                 href={sponsor.website} 
@@ -562,15 +562,19 @@ export const SponsorShowcase = ({ sponsors }) => {
                 rel="noopener noreferrer" 
                 className="group"
               >
-                <div className={`relative h-24 w-40 grayscale hover:grayscale-0 transition-all duration-500 flex items-center justify-center sponsor-tier-${sponsor.tier}`}>
+                <div className={`relative h-16 sm:h-20 md:h-24 w-28 sm:w-36 md:w-40 grayscale hover:grayscale-0 transition-all duration-500 flex items-center justify-center sponsor-tier-${sponsor.tier}`}>
                   <img 
                     src={sponsor.logo} 
                     alt={sponsor.name} 
-                    className="max-h-20 max-w-full object-contain"
+                    className="max-h-12 sm:max-h-16 md:max-h-20 max-w-24 sm:max-w-32 md:max-w-full object-contain"
+                    style={{
+                      maxWidth: '100%', // Ensure image doesn't overflow container
+                      maxHeight: '100%'
+                    }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gray-200 dark:via-voltaris-neutral-300/20 to-transparent opacity-0 group-hover:opacity-100 transform -skew-x-12 translate-x-full group-hover:translate-x-0 transition-all duration-700"></div>
                 </div>
-                <p className="text-center text-xs text-gray-600 dark:text-voltaris-neutral-600 mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">{sponsor.name}</p>
+                <p className="text-center text-[10px] sm:text-xs text-gray-600 dark:text-voltaris-neutral-600 mt-1 sm:mt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">{sponsor.name}</p>
               </a>
             </div>
           ))}
@@ -578,11 +582,25 @@ export const SponsorShowcase = ({ sponsors }) => {
       </div>
       
       {/* Technical circuit decoration */}
-      <div className="mt-4 sponsor-circuit-decoration">
+      <div className="mt-2 sm:mt-4 sponsor-circuit-decoration">
         <div className="flex items-center justify-center">
           <div className="h-px w-full bg-gradient-to-r from-voltaris-red/30 via-transparent to-voltaris-blue/30"></div>
         </div>
       </div>
+      
+      {/* Add responsive styles */}
+      <style>
+        {`
+          @media (max-width: 640px) {
+            .sponsor-track {
+              animation-duration: 20s !important; /* Slower on mobile */
+            }
+            .sponsor-item {
+              min-width: 100px !important;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };

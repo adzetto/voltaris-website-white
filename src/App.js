@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback, Suspense, lazy } from 'react';
 import { 
   ChevronDown, Menu, X, 
   ChevronRight, Cpu, Terminal, Camera, 
@@ -38,6 +38,9 @@ import VehicleSpecsSection from './components/VehicleSpecsSection';
 import AdasSpecsSection from './components/AdasSpecsSection';
 import ContactForm from './components/ContactForm';
 import ScrollIndicatorBar from './components/ui/ScrollIndicatorBar';
+import { GoldSponsorship } from './components/platinum-effects';
+// Import EnvironmentControls at the top of the file
+// import EnvironmentControls from './components/EnvironmentControls';
 
 // Initialize optimizers
 setupOptimizers();
@@ -794,6 +797,8 @@ function App() {
   const [sponsorshipModalOpen, setSponsorshipModalOpen] = useState(false);
   const [currentSponsorTier, setCurrentSponsorTier] = useState('platinum');
   const [isMenuTransitioning, setIsMenuTransitioning] = useState(false); // Add this to prevent multiple clicks
+  const [modelEnvironment, setModelEnvironment] = useState('city');
+  const modelViewerRef = useRef(null);
   
   // Initialize interactive effects
   // useMouseTrail(); // Disabled to improve performance
@@ -1056,7 +1061,8 @@ function App() {
         
         {/* Loading text */}
         <div className="text-center">
-          <div className="text-voltaris-text text-xl font-semibold tracking-wider mb-3 text-center">VOLTARIS</div>
+          <div className="text-voltaris-text text-xl font-semibold tracking-wider mb-3 text-center text-fill-animation">VOLTARIS</div>
+          <div className="typewriter-text text-xs text-voltaris-neutral-700 mb-4">// DESIGNED_WITH_PASSION_BY_VOLTARIS_TEAM</div>
           <div className="flex items-center justify-center space-x-1">
             <div className="w-2 h-2 rounded-full bg-voltaris-red animate-bounce"></div>
             <div className="w-2 h-2 rounded-full bg-voltaris-blue animate-bounce animation-delay-150"></div>
@@ -1067,8 +1073,16 @@ function App() {
     );
   }
 
+  // Handle environment change
+  const handleEnvironmentChange = (envId) => {
+    setModelEnvironment(envId);
+    if (modelViewerRef.current) {
+      modelViewerRef.current.setEnvironment(envId);
+    }
+  };
+
   return (
-    <div className="bg-gradient-to-b from-voltaris-bg via-voltaris-soft-bg to-voltaris-bg text-voltaris-text min-h-screen relative">
+    <div className="App overflow-x-hidden bg-white">
       {/* Add MobileMenuFallback for emergency fixes */}
       <MobileMenuFallback />
       
@@ -1406,20 +1420,25 @@ function App() {
             {/* Mobile footer links */}
             <div className="mt-auto pt-5 border-t border-gray-200">
               <div className="flex flex-col space-y-2 my-4">
-                <a href="https://instagram.com/Voltaris.official" target="_blank" rel="noopener noreferrer" 
-                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-md hover:from-purple-600 hover:to-pink-600 transition-colors">
-                  <Instagram size={16} />
-                  <span className="text-sm">Instagram</span>
+                {/* Email */}
+                <a href="mailto:voltaris.official@gmail.com"
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Mail size={16} />
+                  <span className="text-sm">Email</span>
                 </a>
-                <a href="https://www.linkedin.com/company/i̇yte-voltaris-teknofest-efficiency-challange/" target="_blank" rel="noopener noreferrer" 
-                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+
+                {/* LinkedIn */}
+                <a href="https://www.linkedin.com/company/i̇yte-voltaris-teknofest-efficiency-challange/" target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                   <Linkedin size={16} />
                   <span className="text-sm">LinkedIn</span>
                 </a>
-                <a href="mailto:info@voltaris.com" 
-                   className="flex items-center justify-center space-x-2 px-4 py-2 bg-voltaris-red text-white rounded-md hover:bg-red-600 transition-colors">
-                  <Mail size={16} />
-                  <span className="text-sm">Email</span>
+
+                {/* Instagram (added) */}
+                <a href="https://www.instagram.com/voltaris_official/" target="_blank" rel="noopener noreferrer"
+                  className="flex flex-col items-center gap-1 p-2 rounded-lg hover:bg-gray-100 transition-colors">
+                  <Instagram size={16} />
+                  <span className="text-sm">Instagram</span>
                 </a>
               </div>
               <div className="text-center text-xs text-voltaris-red mb-1">
@@ -1456,7 +1475,7 @@ function App() {
       </header>
 
       {/* Hero Section */}
-      <section id="home" className="min-h-screen flex items-center relative overflow-hidden pt-16 md:pt-0 pb-32 sm:pb-36 md:pb-40 hero-section">
+      <section id="home" className="min-h-screen flex items-center relative overflow-hidden pt-20 md:pt-24 pb-32 sm:pb-36 md:pb-40 hero-section">
         {/* Gradient background with enhanced light rays - lighter version */}
         <div className="absolute inset-0 bg-gradient-to-b from-voltaris-light via-gray-50 to-voltaris-light z-0"></div>
         
@@ -1522,12 +1541,102 @@ function App() {
           </div>
         </div>
         
+        {/* Animated Circuit Pathways */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          {/* Horizontal pulsing circuit lines */}
+          <div className="absolute top-1/4 left-0 w-full h-px">
+            <div className="absolute h-full w-20 bg-gradient-to-r from-transparent via-voltaris-red/40 to-transparent animate-circuitPulseHorizontal"></div>
+          </div>
+          <div className="absolute top-3/4 left-0 w-full h-px">
+            <div className="absolute h-full w-20 bg-gradient-to-r from-transparent via-voltaris-blue/40 to-transparent animate-circuitPulseHorizontal delay-1000"></div>
+          </div>
+          
+          {/* Vertical pulsing circuit lines */}
+          <div className="absolute top-0 left-1/4 h-full w-px">
+            <div className="absolute w-full h-20 bg-gradient-to-b from-transparent via-voltaris-blue/40 to-transparent animate-circuitPulseVertical"></div>
+          </div>
+          <div className="absolute top-0 left-3/4 h-full w-px">
+            <div className="absolute w-full h-20 bg-gradient-to-b from-transparent via-voltaris-red/40 to-transparent animate-circuitPulseVertical delay-700"></div>
+          </div>
+          
+          {/* Circular data nodes */}
+          <div className="absolute top-1/4 left-1/4 h-2 w-2 rounded-full bg-voltaris-red/30 animate-dataNodePulse"></div>
+          <div className="absolute top-1/4 left-3/4 h-2 w-2 rounded-full bg-voltaris-blue/30 animate-dataNodePulse delay-300"></div>
+          <div className="absolute top-3/4 left-1/4 h-2 w-2 rounded-full bg-voltaris-blue/30 animate-dataNodePulse delay-600"></div>
+          <div className="absolute top-3/4 left-3/4 h-2 w-2 rounded-full bg-voltaris-red/30 animate-dataNodePulse delay-900"></div>
+        </div>
+        
+        {/* Floating Technical Blueprint Elements */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute top-[15%] left-[10%] opacity-10 rotate-12 animate-floatingBlueprint">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="60" cy="60" r="50" stroke="#FF4254" strokeWidth="0.5" fill="none" />
+              <circle cx="60" cy="60" r="40" stroke="#FF4254" strokeWidth="0.5" fill="none" />
+              <circle cx="60" cy="60" r="30" stroke="#FF4254" strokeWidth="0.5" fill="none" />
+              <line x1="10" y1="60" x2="110" y2="60" stroke="#FF4254" strokeWidth="0.5" />
+              <line x1="60" y1="10" x2="60" y2="110" stroke="#FF4254" strokeWidth="0.5" />
+            </svg>
+          </div>
+          
+          <div className="absolute top-[65%] left-[75%] opacity-10 -rotate-6 animate-floatingBlueprint delay-300">
+            <svg width="150" height="100" viewBox="0 0 150 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="5" y="5" width="140" height="90" stroke="#0044FF" strokeWidth="0.5" fill="none" />
+              <line x1="5" y1="25" x2="145" y2="25" stroke="#0044FF" strokeWidth="0.5" />
+              <line x1="75" y1="5" x2="75" y2="95" stroke="#0044FF" strokeWidth="0.5" />
+              <circle cx="75" cy="50" r="20" stroke="#0044FF" strokeWidth="0.5" fill="none" />
+            </svg>
+          </div>
+          
+          <div className="absolute top-[40%] left-[60%] opacity-10 rotate-3 animate-floatingBlueprint delay-600">
+            <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="50,5 95,30 95,70 50,95 5,70 5,30" stroke="#FF4254" strokeWidth="0.5" fill="none" />
+              <line x1="50" y1="5" x2="50" y2="95" stroke="#FF4254" strokeWidth="0.5" />
+              <line x1="5" y1="30" x2="95" y2="70" stroke="#FF4254" strokeWidth="0.5" />
+              <line x1="5" y1="70" x2="95" y2="30" stroke="#FF4254" strokeWidth="0.5" />
+            </svg>
+          </div>
+        </div>
+        
+        {/* Animated Energy/Data Flow Effect */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden opacity-20">
+          <div className="absolute top-0 left-0 w-full h-full">
+            {[...Array(15)].map((_, i) => (
+              <div 
+                key={`particle-${i}`} 
+                className="absolute bg-voltaris-red/40 rounded-full animate-energyParticle"
+                style={{ 
+                  top: `${Math.random() * 100}%`, 
+                  left: `${Math.random() * 100}%`,
+                  width: `${Math.random() * 4 + 2}px`,
+                  height: `${Math.random() * 4 + 2}px`,
+                  animationDelay: `${Math.random() * 8}s`,
+                  animationDuration: `${Math.random() * 8 + 8}s`
+                }}
+              ></div>
+            ))}
+            {[...Array(15)].map((_, i) => (
+              <div 
+                key={`particle-blue-${i}`} 
+                className="absolute bg-voltaris-blue/40 rounded-full animate-energyParticle"
+                style={{ 
+                  top: `${Math.random() * 100}%`, 
+                  left: `${Math.random() * 100}%`,
+                  width: `${Math.random() * 4 + 2}px`,
+                  height: `${Math.random() * 4 + 2}px`,
+                  animationDelay: `${Math.random() * 8}s`,
+                  animationDuration: `${Math.random() * 8 + 8}s`
+                }}
+              ></div>
+            ))}
+          </div>
+        </div>
+        
         <div className="container mx-auto px-4 z-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center pb-16 sm:pb-20">
             <div className="order-2 md:order-1">
               <div className="hero-accent font-mono text-xs mb-2 tracking-widest animate-fadeIn flex items-center">
-                <span className="inline-block w-2 h-2 bg-red-500/50 rounded-full mr-2"></span>
-                {'// ELEKTRO_MOBİL_V1.0.2'}
+                <div className="w-1.5 h-1.5 bg-voltaris-red mr-1.5 rounded-full"></div>
+                <span>ELEKTROMOBİL</span>
               </div>
               <h1 className="hero-title text-3xl sm:text-4xl md:text-5xl lg:text-6xl mb-4 leading-tight animate-fadeIn">
                 <span className="hero-accent">Voltaris</span> Elektrikli Araç Projesi
@@ -1569,14 +1678,18 @@ function App() {
             {/* 3D Model - visible on larger screens by default */}
             <div className="order-1 md:order-2 md:block animate-fadeInDelay relative">
               {/* 3D Model Viewer */}
-              <TechnicalModelViewer />
+              <TechnicalModelViewer 
+                ref={modelViewerRef}
+                initialEnvironment={modelEnvironment}
+              />
+              {/* Removed EnvironmentControls */}
             </div>
           </div>
         </div>
         
         {/* Sponsorship Bar with advanced positioning */}
-        <div className="absolute bottom-0 left-0 right-0 z-10 px-4 mb-5 sponsor-bar-container">
-          <div className="container mx-auto w-full">
+        <div className="absolute bottom-0 left-0 right-0 z-10 mb-10 sm:mb-16 sponsor-bar-container">
+          <div className="container mx-auto w-full px-2 sm:px-4">
             <EnhancedSponsorsBar sponsors={teamData.sponsorData} />
           </div>
         </div>
@@ -2240,7 +2353,7 @@ function App() {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 md:mb-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8 md:mb-12">
             <div className="bg-gradient-to-b from-[#F4F5F8] to-[#E8EBF2] p-4 sm:p-6 rounded-lg transition-all duration-300 text-center group h-full platinum-sponsor-card relative overflow-hidden shadow-xl border border-[#D0D6E2]">
               {/* Elegant platinum accents */}
               <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#8E9BAE] via-[#C9D0DC] to-[#8E9BAE]"></div>
@@ -2288,6 +2401,58 @@ function App() {
                 >
                   <span className="relative z-10">İletişime Geç</span>
                   <span className="absolute inset-0 bg-gradient-to-r from-[#7A8A9E] to-[#7A8A9E] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
+                </button>
+              </div>
+            </div>
+            
+            {/* Gold Sponsorship Card */}
+            <div className="bg-gradient-to-b from-[#FFF9E5] to-[#FFEEB3] p-4 sm:p-6 rounded-lg transition-all duration-300 text-center group h-full gold-sponsor-card relative overflow-hidden shadow-xl border border-[#E5CC73]">
+              {/* Gold accents */}
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#E5CC73] via-[#FFD700] to-[#E5CC73]"></div>
+              <div className="absolute inset-x-0 bottom-0 h-1.5 bg-gradient-to-r from-[#E5CC73] via-[#FFD700] to-[#E5CC73]"></div>
+              
+              {/* Corner elements */}
+              <div className="absolute top-0 left-0 w-10 h-10 border-t-2 border-l-2 border-[#E5CC73] opacity-70"></div>
+              <div className="absolute top-0 right-0 w-10 h-10 border-t-2 border-r-2 border-[#E5CC73] opacity-70"></div>
+              <div className="absolute bottom-0 left-0 w-10 h-10 border-b-2 border-l-2 border-[#E5CC73] opacity-70"></div>
+              <div className="absolute bottom-0 right-0 w-10 h-10 border-b-2 border-r-2 border-[#E5CC73] opacity-70"></div>
+              
+              {/* Pattern background */}
+              <div className="absolute inset-0 opacity-5">
+                <div className="w-full h-full" style={{ 
+                  backgroundImage: "radial-gradient(#FFD700 1px, transparent 1px), radial-gradient(#FFD700 1px, transparent 1px)",
+                  backgroundSize: "20px 20px",
+                  backgroundPosition: "0 0, 10px 10px"
+                }}></div>
+              </div>
+              
+              {/* Gold shimmer effect */}
+              <div className="absolute -inset-x-full top-0 bottom-0 h-full w-[200%] bg-gradient-to-r from-transparent via-white/30 to-transparent opacity-50 transform -translate-x-full animate-shimmerSlow pointer-events-none"></div>
+              
+              <div className="relative z-10">
+                <div className="text-[#A67C00] font-bold mb-2 text-xl sm:text-2xl">Altın</div>
+                <div className="w-12 h-0.5 mx-auto mb-4 bg-gradient-to-r from-transparent via-[#FFD700] to-transparent"></div>
+                <div className="text-[#6B5100] text-lg sm:text-xl mb-3 sm:mb-4">₺35,000+</div>
+                <ul className="text-left space-y-1.5 mb-4 sm:mb-6 border border-[#E5CC73]/70 rounded-lg p-3 bg-white/50">
+                  <li className="flex items-start text-xs sm:text-sm">
+                    <span className="text-[#D4AF37] mr-2 mt-0.5">◆</span>
+                    <span className="text-[#6B5100]">Aracın ön ve yan yüzeylerinde orta boy logo</span>
+                  </li>
+                  <li className="flex items-start text-xs sm:text-sm">
+                    <span className="text-[#D4AF37] mr-2 mt-0.5">◆</span>
+                    <span className="text-[#6B5100]">İkincil öncelikli medya tanıtımı</span>
+                  </li>
+                  <li className="flex items-start text-xs sm:text-sm">
+                    <span className="text-[#D4AF37] mr-2 mt-0.5">◆</span>
+                    <span className="text-[#6B5100]">Etkinlik ve yarışmalarda VIP erişim</span>
+                  </li>
+                </ul>
+                <button 
+                  className="w-full relative overflow-hidden bg-gradient-to-r from-[#E5CC73] via-[#FFD700] to-[#E5CC73] text-[#6B5100] px-3 sm:px-4 py-2 rounded-lg text-sm font-medium shadow-lg hover:shadow-xl transition-all duration-300 group"
+                  onClick={() => handleOpenSponsorshipModal('gold')}
+                >
+                  <span className="relative z-10">İletişime Geç</span>
+                  <span className="absolute inset-0 bg-gradient-to-r from-[#FFD700] to-[#FFD700] opacity-0 group-hover:opacity-100 transition-opacity duration-300"></span>
                 </button>
               </div>
             </div>
@@ -2399,6 +2564,21 @@ function App() {
               </div>
             </div>
           </div>
+          
+          {/* Gold Tier Detail Section */}
+          <div className="mt-16 pt-8 border-t border-gray-200">
+            <div className="text-center mb-8">
+              <h2 className="text-xl sm:text-2xl font-bold mb-3 text-[#A67C00]">Altın Sponsorluk Detayları</h2>
+              <div className="h-1 w-16 sm:w-20 bg-gradient-to-r from-[#E5CC73] via-[#FFD700] to-[#E5CC73] mx-auto"></div>
+              <p className="text-voltaris-neutral-600 mt-4 max-w-2xl mx-auto text-sm sm:text-base px-2">
+                Altın sponsorlarımız için sunduğumuz özel avantajlar ve işbirliği fırsatları hakkında detaylı bilgi.
+              </p>
+            </div>
+            
+            <div className="bg-gradient-to-b from-white to-[#FFFAF0] rounded-xl shadow-xl border border-[#E5CC73]/20 overflow-hidden">
+              <GoldSponsorship />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -2429,9 +2609,9 @@ function App() {
               </div>
               <h3 className="text-base sm:text-lg font-bold mb-2 text-voltaris-text">İletişim</h3>
               <p className="text-voltaris-secondary text-xs sm:text-sm">
+                info@iyte.edu.tr<br />
                 voltaris.official@gmail.com<br />
-                +90 532 496 2216 (Gamze)<br />
-                +90 532 777 5679 (Büşra)
+                +90 (232) 750 60 00
               </p>
             </div>
             
@@ -2538,7 +2718,7 @@ function App() {
               <a href="https://www.linkedin.com/company/i̇yte-voltaris-teknofest-efficiency-challange/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors">
                 <Linkedin size={18} className="sm:w-5 sm:h-5" />
               </a>
-              <a href="mailto:unal.omer@proton.me" className="text-gray-400 hover:text-white transition-colors">
+              <a href="mailto:voltaris.official@gmail.com" className="text-gray-400 hover:text-white transition-colors">
                 <Mail size={18} className="sm:w-5 sm:h-5" />
               </a>
               <a href="tel:+905531752708" className="text-gray-400 hover:text-white transition-colors">

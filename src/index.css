@@ -1170,3 +1170,122 @@ button:hover, .btn:hover {
 .animate-shimmerSlow {
   animation: shimmerSlow 5s infinite ease-in-out;
 }
+
+/* Animation for circuit pulse horizontal */
+@keyframes circuitPulseHorizontal {
+  0% { transform: translateX(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(100vw); opacity: 0; }
+}
+
+.animate-circuitPulseHorizontal {
+  animation: circuitPulseHorizontal 8s linear infinite;
+}
+
+/* Animation for circuit pulse vertical */
+@keyframes circuitPulseVertical {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100vh); opacity: 0; }
+}
+
+.animate-circuitPulseVertical {
+  animation: circuitPulseVertical 8s linear infinite;
+}
+
+/* Animation for data nodes */
+@keyframes dataNodePulse {
+  0% { transform: scale(0.5); opacity: 0.2; }
+  50% { transform: scale(1.5); opacity: 0.8; }
+  100% { transform: scale(0.5); opacity: 0.2; }
+}
+
+.animate-dataNodePulse {
+  animation: dataNodePulse 4s ease-in-out infinite;
+}
+
+/* Animation for floating blueprints */
+@keyframes floatingBlueprint {
+  0% { transform: translateY(0) rotate(0); opacity: 0.05; }
+  50% { transform: translateY(-15px) rotate(3deg); opacity: 0.15; }
+  100% { transform: translateY(0) rotate(0); opacity: 0.05; }
+}
+
+.animate-floatingBlueprint {
+  animation: floatingBlueprint 10s ease-in-out infinite;
+}
+
+/* Animation for energy particles */
+@keyframes energyParticle {
+  0% { transform: translate(0, 0); opacity: 0; }
+  50% { opacity: 0.8; }
+  100% { transform: translate(30px, 30px); opacity: 0; }
+}
+
+.animate-energyParticle {
+  animation: energyParticle 8s linear infinite;
+}
+
+/* Animation for diagonal scan */
+@keyframes diagonalScan {
+  0% { transform: translate(-100%, -100%) rotate(45deg); }
+  100% { transform: translate(100%, 100%) rotate(45deg); }
+}
+
+.animate-diagonalScan {
+  animation: diagonalScan 15s linear infinite;
+}
+
+/* Animation for diagonal scan in reverse */
+@keyframes diagonalScanReverse {
+  0% { transform: translate(-100%, 100%) rotate(-45deg); }
+  100% { transform: translate(100%, -100%) rotate(-45deg); }
+}
+
+.animate-diagonalScanReverse {
+  animation: diagonalScanReverse 15s linear infinite;
+}
+
+/* Text fill animation for the VOLTARIS text in loading screen */
+@keyframes textFill {
+  0% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+.text-fill-animation {
+  background: linear-gradient(to right, #FF4254, #0044FF);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  animation: textFill 2s ease-out forwards;
+}
+
+/* Typewriter animation for the passion tagline */
+@keyframes typewriter {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes blinkCursor {
+  from { border-right-color: rgba(255, 66, 84, 0.75); }
+  to { border-right-color: transparent; }
+}
+
+.typewriter-text {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: monospace;
+  margin: 0 auto;
+  width: 0;
+  border-right: 2px solid rgba(255, 66, 84, 0.75);
+  animation: 
+    typewriter 1.2s steps(40, end) 0.3s forwards,
+    blinkCursor 0.75s step-end infinite;
+}

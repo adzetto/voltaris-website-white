@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect, useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { OrbitControls, Html, Text, Environment } from '@react-three/drei';
 import * as THREE from 'three';
@@ -414,7 +414,7 @@ const InnerTechnicalScene = () => {
       </mesh>
       
       {/* Surrounding environment */}
-      <Environment preset="city" />
+      <Environment preset="sunset" />
       
       {/* Technical scale measurements */}
       <group position={[0, -0.79, 0]}>
@@ -452,21 +452,113 @@ const InnerTechnicalScene = () => {
 };
 
 // Main component with technical UI elements
-const TechnicalModelViewer = () => {
+const TechnicalModelViewer = forwardRef(({ initialEnvironment = 'sunset' }, ref) => {
   // Create a ref for the EnhancedModelViewer component
   const modelViewerRef = useRef(null);
   // Add state for rotation to track UI changes
   const [isRotating, setIsRotating] = useState(true);
+  // Add state for environment and lighting controls
+  const [environment, setEnvironment] = useState(initialEnvironment);
+  const [lightIntensity, setLightIntensity] = useState(0.5);
+  // State for controls visibility on all devices
+  const [showControls, setShowControls] = useState(false);
+  // Add state for car color
+  const [carColor, setCarColor] = useState('BLUE');
   
+  // Environment presets options
+  const environmentOptions = [
+    { id: 'city', name: 'Şehir' },
+    { id: 'sunset', name: 'Gün Batımı' },
+    { id: 'dawn', name: 'Şafak' },
+    { id: 'night', name: 'Gece' },
+    { id: 'warehouse', name: 'Laboratuvar' },
+    { id: 'studio', name: 'Stüdyo' }
+  ];
+  
+  // Car color options
+  const carColorOptions = [
+    { id: 'RED', name: 'Kırmızı' },
+    { id: 'BLUE', name: 'Mavi' },
+    { id: 'BLACK', name: 'Siyah' },
+    { id: 'SILVER', name: 'Gümüş' },
+    { id: 'WHITE', name: 'Beyaz' },
+    { id: 'GRAY', name: 'Gri' },
+    { id: 'YELLOW', name: 'Sarı' },
+    { id: 'GREEN', name: 'Yeşil' }
+  ];
+  
+  // Handle environment change
+  const handleEnvironmentChange = (envId) => {
+    setEnvironment(envId);
+    if (modelViewerRef.current) {
+      modelViewerRef.current.setEnvironment(envId);
+    }
+  };
+  
+  // Handle light intensity change
+  const handleLightIntensityChange = (intensity) => {
+    setLightIntensity(intensity);
+    if (modelViewerRef.current) {
+      modelViewerRef.current.setLightIntensity(intensity);
+    }
+  };
+  
+  // Handle car color change
+  const handleCarColorChange = (color) => {
+    setCarColor(color);
+    if (modelViewerRef.current) {
+      modelViewerRef.current.setCarColor(color);
+    }
+  };
+  
+  // Toggle controls visibility
+  const toggleControls = () => {
+    setShowControls(!showControls);
+  };
+  
+  // Expose methods to parent components
+  useImperativeHandle(ref, () => ({
+    setEnvironment: handleEnvironmentChange,
+    getEnvironment: () => environment,
+    setCarColor: handleCarColorChange,
+    getCarColor: () => carColor,
+    resetView: () => {
+      if (modelViewerRef.current) {
+        modelViewerRef.current.resetCameraView();
+      }
+    },
+    toggleRotation: () => {
+      if (modelViewerRef.current) {
+        modelViewerRef.current.toggleRotation();
+        setIsRotating(!isRotating);
+      }
+    }
+  }));
+
   return (
-    <div className="relative w-full h-52 sm:h-64 md:h-96 lg:h-[420px] rounded-lg overflow-hidden border border-voltaris-neutral-300 shadow-lg shadow-voltaris-neutral-300/20 model-viewer-container">
-      {/* Professional UI overlay panel */}
-      <div className="absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-voltaris-neutral-100/90 to-transparent">
-        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between px-2 xs:px-3 py-2 border-b border-voltaris-neutral-300/30">
-          <div className="flex items-center flex-wrap gap-2 xs:gap-3 mb-1 xs:mb-0">
-            <div className="flex items-center px-2 py-1 bg-voltaris-neutral-50 border-l-2 border-voltaris-red/60 rounded-r status-indicator">
-              <div className="h-1.5 w-1.5 rounded-full bg-voltaris-red mr-2 animate-pulse"></div>
-              <span className="text-xs font-mono tracking-wide text-voltaris-neutral-700 uppercase">
+    <div className="relative w-full h-64 sm:h-72 md:h-80 lg:h-96 xl:h-[420px] rounded-lg overflow-hidden border border-voltaris-neutral-300 shadow-lg shadow-voltaris-neutral-300/20 model-viewer-container">
+      {/* Universal toggle control button - visible on all devices */}
+      <button 
+        onClick={toggleControls}
+        className="absolute top-2 right-2 z-30 p-1.5 bg-voltaris-neutral-100/90 backdrop-blur-sm border border-voltaris-neutral-300/50 rounded-md shadow-sm flex items-center text-[8px] md:text-[10px] font-mono transition-all duration-300 hover:bg-voltaris-neutral-200/90 group"
+      >
+        <span className="mr-1 text-voltaris-neutral-700 group-hover:text-voltaris-neutral-900">Kontroller</span>
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-voltaris-neutral-700 group-hover:text-voltaris-neutral-900" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          {showControls ? (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          ) : (
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          )}
+        </svg>
+      </button>
+
+      {/* Professional UI overlay panel - Top */}
+      <div className={`absolute left-0 right-0 top-0 z-20 bg-gradient-to-b from-voltaris-neutral-100/90 to-transparent transition-transform duration-300 ${!showControls && 'translate-y-[-100%]'}`}>
+        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between px-2 xs:px-3 py-1 sm:py-2 border-b border-voltaris-neutral-300/30">
+          <div className="flex items-center flex-wrap gap-1 xs:gap-2 mb-0.5 xs:mb-0">
+            <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-l-2 border-voltaris-red/60 rounded-r status-indicator">
+              <div className="h-1.5 w-1.5 rounded-full bg-voltaris-red mr-1.5 sm:mr-2 animate-pulse"></div>
+              <span className="text-[10px] xs:text-xs font-mono tracking-wide text-voltaris-neutral-700 uppercase">
                 Model: <span className="text-voltaris-red font-medium">Active</span>
               </span>
             </div>
@@ -478,84 +570,257 @@ const TechnicalModelViewer = () => {
             </div>
           </div>
         
-          <div className="flex space-x-2 xs:space-x-3 text-xs font-mono">
-            <div className="flex items-center px-2 py-1 bg-voltaris-neutral-50 border-r-2 border-voltaris-blue/60 rounded-l">
-              <div className="h-1.5 w-1.5 rounded-full bg-voltaris-blue mr-1.5"></div>
-              <span className="text-voltaris-neutral-700 uppercase text-[10px] xs:text-xs">Render: <span className="text-voltaris-blue">RT</span></span>
+          <div className="flex space-x-1 xs:space-x-2 text-[10px] xs:text-xs font-mono">
+            <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-r-2 border-voltaris-blue/60 rounded-l">
+              <div className="h-1.5 w-1.5 rounded-full bg-voltaris-blue mr-1 sm:mr-1.5"></div>
+              <span className="text-voltaris-neutral-700 uppercase text-[8px] xs:text-[10px] sm:text-xs">Render: <span className="text-voltaris-blue">RT</span></span>
             </div>
-            <div className="flex items-center px-2 py-1 bg-voltaris-neutral-50 border-r-2 border-green-500/60 rounded-l">
-              <div className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1.5"></div>
-              <span className="text-voltaris-neutral-700 uppercase text-[10px] xs:text-xs">Ölçek: <span className="text-green-600">1:32</span></span>
+            <div className="hidden xs:flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-r-2 border-green-500/60 rounded-l">
+              <div className="h-1.5 w-1.5 rounded-full bg-green-500 mr-1 sm:mr-1.5"></div>
+              <span className="text-voltaris-neutral-700 uppercase text-[8px] xs:text-[10px] sm:text-xs">Ölçek: <span className="text-green-600">1:32</span></span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Professional UI overlay panel - bottom */}
-      <div className="absolute left-0 right-0 bottom-0 z-20 bg-gradient-to-t from-voltaris-neutral-100/90 to-transparent">
-        <div className="flex flex-col xs:flex-row justify-between items-start xs:items-center gap-2 px-2 xs:px-3 py-2 border-t border-voltaris-neutral-300/30">
-          <div className="flex flex-wrap items-center gap-2 xs:gap-3 text-[10px] xs:text-xs font-mono">
-            <div className="flex items-center px-2 py-1 bg-voltaris-neutral-50 border-l-2 border-voltaris-blue/60 rounded-r">
-              <div className="h-1.5 w-1.5 rounded-full bg-voltaris-blue mr-1.5"></div>
-              <span className="text-voltaris-neutral-700 uppercase">Zoom: <span className="text-voltaris-blue">Aktif</span></span>
+      <div className={`absolute left-0 right-0 bottom-0 z-20 bg-gradient-to-t from-voltaris-neutral-100/90 to-transparent transition-transform duration-300 ${!showControls && 'translate-y-[100%]'}`}>
+        <div className="flex flex-col gap-1.5 xs:gap-2 px-2 xs:px-3 py-1.5 sm:py-2 border-t border-voltaris-neutral-300/30">
+          {/* Camera controls row */}
+          <div className="flex flex-wrap justify-between items-center">
+            <div className="flex flex-wrap items-center gap-1.5 xs:gap-2 text-[8px] xs:text-[10px] sm:text-xs font-mono">
+              <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-l-2 border-voltaris-blue/60 rounded-r">
+                <div className="h-1.5 w-1.5 rounded-full bg-voltaris-blue mr-1 sm:mr-1.5"></div>
+                <span className="text-voltaris-neutral-700 uppercase">Zoom: <span className="text-voltaris-blue">Aktif</span></span>
+              </div>
+              <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-l-2 border-voltaris-red/60 rounded-r">
+                <div className="h-1.5 w-1.5 rounded-full bg-voltaris-red mr-1 sm:mr-1.5"></div>
+                <span className="text-voltaris-neutral-700 uppercase">Döndür: <span className="text-voltaris-red">Manuel</span></span>
+              </div>
             </div>
-            <div className="flex items-center px-2 py-1 bg-voltaris-neutral-50 border-l-2 border-voltaris-red/60 rounded-r">
-              <div className="h-1.5 w-1.5 rounded-full bg-voltaris-red mr-1.5"></div>
-              <span className="text-voltaris-neutral-700 uppercase">Döndür: <span className="text-voltaris-red">Manuel</span></span>
+            
+            <div className="flex space-x-1.5 sm:space-x-2 items-center">
+              <button
+                className="text-[8px] xs:text-[10px] sm:text-xs font-mono px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-1 sm:py-1.5 bg-gray-50 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition-all duration-200 flex items-center shadow-sm"
+                onClick={() => {
+                  if (modelViewerRef.current) {
+                    modelViewerRef.current.toggleRotation();
+                    setIsRotating(!isRotating);
+                  }
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1 sm:mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+                {isRotating ? "Free" : "Fixed"}
+              </button>
+              
+              <button
+                className="text-[8px] xs:text-[10px] sm:text-xs font-mono px-1.5 xs:px-2 sm:px-3 py-0.5 xs:py-1 sm:py-1.5 bg-gray-50 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition-all duration-200 flex items-center shadow-sm"
+                onClick={() => {
+                  if (modelViewerRef.current) {
+                    modelViewerRef.current.resetCameraView();
+                  }
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 sm:h-3 sm:w-3 mr-1 sm:mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Reset
+              </button>
             </div>
           </div>
           
-          <div className="flex space-x-2 items-center">
-            <button
-              className="text-[10px] xs:text-xs font-mono px-2 xs:px-3 py-1 xs:py-1.5 bg-gray-50 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition-all duration-200 flex items-center shadow-sm"
-              onClick={() => {
-                if (modelViewerRef.current) {
-                  modelViewerRef.current.toggleRotation();
-                  setIsRotating(!isRotating);
-                }
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M12 6v6l4 2" />
-              </svg>
-              {isRotating ? "Free" : "Fixed"}
-            </button>
+          {/* Environment and lighting controls row */}
+          <div className="flex flex-wrap justify-between items-center">
+            {/* Environment selector */}
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+              <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-l-2 border-yellow-500/60 rounded-r relative overflow-hidden shadow-sm">
+                {/* Added subtle pulsing glow effect */}
+                <div className="absolute inset-0 bg-yellow-500/10 animate-pulse-soft"></div>
+                <div className="h-1.5 w-1.5 rounded-full bg-yellow-500 mr-1 sm:mr-1.5 relative z-10"></div>
+                <span className="text-[8px] xs:text-[10px] sm:text-xs font-mono text-voltaris-neutral-700 uppercase relative z-10">Ortam:</span>
+              </div>
+              <div className="flex flex-wrap gap-0.5 sm:gap-1">
+                {environmentOptions.map((env) => (
+                  <button
+                    key={env.id}
+                    className={`text-[7px] xs:text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded font-mono ${
+                      environment === env.id
+                        ? 'bg-voltaris-neutral-700 text-white shadow-sm'
+                        : 'bg-voltaris-neutral-100 text-voltaris-neutral-700 hover:bg-voltaris-neutral-200'
+                    } transition-colors`}
+                    onClick={() => handleEnvironmentChange(env.id)}
+                  >
+                    {env.name}
+                  </button>
+                ))}
+              </div>
+            </div>
             
-            <button
-              className="text-[10px] xs:text-xs font-mono px-2 xs:px-3 py-1 xs:py-1.5 bg-gray-50 border border-gray-300 text-gray-700 rounded hover:bg-gray-100 transition-all duration-200 flex items-center shadow-sm"
-              onClick={() => {
-                if (modelViewerRef.current) {
-                  modelViewerRef.current.resetCameraView();
-                }
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Reset
-            </button>
+            {/* Light intensity control */}
+            <div className="flex items-center gap-1 sm:gap-1.5">
+              <div className="flex items-center px-1.5 sm:px-2 py-0.5 bg-voltaris-neutral-50 border-r-2 border-orange-400/60 rounded-l">
+                <span className="text-[8px] xs:text-[10px] sm:text-xs font-mono text-voltaris-neutral-700 uppercase">Işık:</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-1 text-orange-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="5" />
+                  <line x1="12" y1="1" x2="12" y2="3" />
+                  <line x1="12" y1="21" x2="12" y2="23" />
+                  <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                  <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                  <line x1="1" y1="12" x2="3" y2="12" />
+                  <line x1="21" y1="12" x2="23" y2="12" />
+                  <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                  <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+                </svg>
+              </div>
+              <div className="flex items-center gap-0.5 sm:gap-1">
+                {[0.5, 0.75, 1, 1.25, 1.5].map((intensity) => (
+                  <button
+                    key={intensity}
+                    className={`text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded-sm font-mono ${
+                      lightIntensity === intensity
+                        ? 'bg-voltaris-neutral-700 text-white shadow-sm'
+                        : 'bg-voltaris-neutral-100 text-voltaris-neutral-700 hover:bg-voltaris-neutral-200'
+                    } transition-colors`}
+                    onClick={() => handleLightIntensityChange(intensity)}
+                  >
+                    {intensity.toString().replace('0.', '.')}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Car color selector row */}
+          <div className="flex flex-wrap justify-between items-center mt-1.5 xs:mt-2">
+            <div className="flex flex-wrap items-center gap-1 sm:gap-1.5">
+              <div className="flex items-center px-1.5 sm:px-2 py-0.5 sm:py-1 bg-voltaris-neutral-50 border-l-2 border-blue-500/60 rounded-r relative overflow-hidden shadow-sm">
+                <div className="absolute inset-0 bg-blue-500/10 animate-pulse-soft"></div>
+                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 mr-1 sm:mr-1.5 relative z-10"></div>
+                <span className="text-[8px] xs:text-[10px] sm:text-xs font-mono text-voltaris-neutral-700 uppercase relative z-10">Renk:</span>
+              </div>
+              <div className="flex flex-wrap gap-0.5 sm:gap-1">
+                {carColorOptions.map((color) => (
+                  <button
+                    key={color.id}
+                    className={`text-[7px] xs:text-[8px] sm:text-[10px] px-1 sm:px-1.5 py-0.5 rounded font-mono ${
+                      carColor === color.id
+                        ? 'bg-voltaris-neutral-700 text-white shadow-sm'
+                        : 'bg-voltaris-neutral-100 text-voltaris-neutral-700 hover:bg-voltaris-neutral-200'
+                    } transition-colors`}
+                    onClick={() => handleCarColorChange(color.id)}
+                    style={{
+                      borderBottom: `2px solid ${
+                        color.id === 'RED' ? '#d81937' :
+                        color.id === 'BLUE' ? '#004a9e' :
+                        color.id === 'BLACK' ? '#121212' :
+                        color.id === 'SILVER' ? '#c5c8d0' :
+                        color.id === 'WHITE' ? '#f2f3f5' :
+                        color.id === 'GRAY' ? '#303234' :
+                        color.id === 'YELLOW' ? '#ffb81c' :
+                        '#01644a' // GREEN
+                      }`
+                    }}
+                  >
+                    {color.name}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+
+      {/* Floating action buttons (always visible on all devices) */}
+      <div className="absolute bottom-2 left-2 z-30 flex gap-1.5">
+        <button
+          className="p-1.5 bg-voltaris-neutral-100/90 backdrop-blur-sm border border-voltaris-neutral-300/50 rounded-md shadow-sm flex items-center text-[8px] md:text-[10px] font-mono hover:bg-voltaris-neutral-200/90 transition-all duration-300"
+          onClick={() => {
+            if (modelViewerRef.current) {
+              modelViewerRef.current.resetCameraView();
+            }
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-voltaris-neutral-700 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="text-voltaris-neutral-700">Sıfırla</span>
+        </button>
+        <button
+          className="p-1.5 bg-voltaris-neutral-100/90 backdrop-blur-sm border border-voltaris-neutral-300/50 rounded-md shadow-sm flex items-center text-[8px] md:text-[10px] font-mono hover:bg-voltaris-neutral-200/90 transition-all duration-300"
+          onClick={() => {
+            if (modelViewerRef.current) {
+              modelViewerRef.current.toggleRotation();
+              setIsRotating(!isRotating);
+            }
+          }}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-voltaris-neutral-700 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v.01M8.5 8.5a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0zM12 19v.01" />
+          </svg>
+          <span className="text-voltaris-neutral-700">{isRotating ? "Durdur" : "Döndür"}</span>
+        </button>
+      </div>
+
+      {/* Quick selectors for important settings - visible when controls are hidden */}
+      <div className="absolute bottom-2 right-2 z-30 flex flex-col gap-1.5">
+        <select 
+          className="text-[8px] md:text-[10px] font-mono px-1.5 py-1 bg-voltaris-neutral-100/90 backdrop-blur-sm border border-voltaris-neutral-300/50 rounded-md shadow-sm hover:bg-voltaris-neutral-200/90 transition-all duration-300"
+          value={environment}
+          onChange={(e) => handleEnvironmentChange(e.target.value)}
+        >
+          {environmentOptions.map((env) => (
+            <option key={env.id} value={env.id}>{env.name}</option>
+          ))}
+        </select>
+        
+        <select 
+          className="text-[8px] md:text-[10px] font-mono px-1.5 py-1 bg-voltaris-neutral-100/90 backdrop-blur-sm border border-voltaris-neutral-300/50 rounded-md shadow-sm hover:bg-voltaris-neutral-200/90 transition-all duration-300"
+          value={carColor}
+          onChange={(e) => handleCarColorChange(e.target.value)}
+          style={{
+            borderLeft: `4px solid ${
+              carColor === 'RED' ? '#d81937' :
+              carColor === 'BLUE' ? '#004a9e' :
+              carColor === 'BLACK' ? '#121212' :
+              carColor === 'SILVER' ? '#c5c8d0' :
+              carColor === 'WHITE' ? '#f2f3f5' :
+              carColor === 'GRAY' ? '#303234' :
+              carColor === 'YELLOW' ? '#ffb81c' :
+              '#01644a' // GREEN
+            }`
+          }}
+        >
+          {carColorOptions.map((color) => (
+            <option key={color.id} value={color.id}>{color.name}</option>
+          ))}
+        </select>
       </div>
 
       <div className="absolute inset-0 pointer-events-none z-0 opacity-3 bg-technical-grid bg-grid-pattern"></div>
       
       {/* Corner accent lines */}
-      <div className="absolute top-0 left-0 w-8 sm:w-16 h-px bg-gradient-to-r from-voltaris-red/30 to-transparent"></div>
-      <div className="absolute top-0 left-0 h-8 sm:h-16 w-px bg-gradient-to-b from-voltaris-red/30 to-transparent"></div>
-      <div className="absolute top-0 right-0 w-8 sm:w-16 h-px bg-gradient-to-l from-voltaris-blue/30 to-transparent"></div>
-      <div className="absolute top-0 right-0 h-8 sm:h-16 w-px bg-gradient-to-b from-voltaris-blue/30 to-transparent"></div>
-      <div className="absolute bottom-0 left-0 w-8 sm:w-16 h-px bg-gradient-to-r from-voltaris-blue/30 to-transparent"></div>
-      <div className="absolute bottom-0 left-0 h-8 sm:h-16 w-px bg-gradient-to-t from-voltaris-blue/30 to-transparent"></div>
-      <div className="absolute bottom-0 right-0 w-8 sm:w-16 h-px bg-gradient-to-l from-voltaris-red/30 to-transparent"></div>
-      <div className="absolute bottom-0 right-0 h-8 sm:h-16 w-px bg-gradient-to-t from-voltaris-red/30 to-transparent"></div>
+      <div className="absolute top-0 left-0 w-6 sm:w-8 lg:w-16 h-px bg-gradient-to-r from-voltaris-red/30 to-transparent"></div>
+      <div className="absolute top-0 left-0 h-6 sm:h-8 lg:h-16 w-px bg-gradient-to-b from-voltaris-red/30 to-transparent"></div>
+      <div className="absolute top-0 right-0 w-6 sm:w-8 lg:w-16 h-px bg-gradient-to-l from-voltaris-blue/30 to-transparent"></div>
+      <div className="absolute top-0 right-0 h-6 sm:h-8 lg:h-16 w-px bg-gradient-to-b from-voltaris-blue/30 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 w-6 sm:w-8 lg:w-16 h-px bg-gradient-to-r from-voltaris-blue/30 to-transparent"></div>
+      <div className="absolute bottom-0 left-0 h-6 sm:h-8 lg:h-16 w-px bg-gradient-to-t from-voltaris-blue/30 to-transparent"></div>
+      <div className="absolute bottom-0 right-0 w-6 sm:w-8 lg:w-16 h-px bg-gradient-to-l from-voltaris-red/30 to-transparent"></div>
+      <div className="absolute bottom-0 right-0 h-6 sm:h-8 lg:h-16 w-px bg-gradient-to-t from-voltaris-red/30 to-transparent"></div>
       
       <div className="h-full w-full z-10 overflow-hidden">
-        <EnhancedModelViewer ref={modelViewerRef} />
+        <EnhancedModelViewer 
+          ref={modelViewerRef} 
+          initialEnvironment={environment}
+          initialLightIntensity={lightIntensity}
+          initialCarColor={carColor}
+        />
       </div>
     </div>
   );
-};
+});
 
 export default TechnicalModelViewer;

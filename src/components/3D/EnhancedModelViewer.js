@@ -127,63 +127,52 @@ function ReflectiveFloor() {
 }
 
 // Enhanced lighting setup for a lighter theme
-function EnhancedPBRLighting() {
-  // Reference for main light
-  const keyLightRef = useRef();
-  
-  // Subtle light animation with safe early return
-  useFrame(({ clock }) => {
-    if (!keyLightRef.current) return;
-    
-    const t = clock.elapsedTime * 0.1;
-    keyLightRef.current.position.x = 5 + Math.sin(t) * 0.2;
-    keyLightRef.current.position.z = Math.cos(t) * 0.2;
-  });
-  
+function EnhancedPBRLighting({ intensity = 1 }) {
   return (
     <>
-      {/* Key light - main illumination */}
-      <SpotLight 
-        ref={keyLightRef}
-        position={[5, 5, 0]} 
-        angle={0.5} 
-        penumbra={0.8} 
-        intensity={1.2} 
-        distance={20}
+      {/* Main light */}
+      <ambientLight intensity={0.4 * intensity} />
+      
+      {/* Key light */}
+      <directionalLight
+        position={[10, 10, 5]}
+        intensity={1 * intensity}
         castShadow
-        shadow-bias={-0.0001}
-        shadow-mapSize={[1024, 1024]}
+        shadow-mapSize-width={2048}
+        shadow-mapSize-height={2048}
+        shadow-camera-far={50}
+        shadow-camera-left={-10}
+        shadow-camera-right={10}
+        shadow-camera-top={10}
+        shadow-camera-bottom={-10}
+      />
+      
+      {/* Fill light */}
+      <directionalLight
+        position={[-10, 8, -5]}
+        intensity={0.6 * intensity}
+        castShadow
+      />
+      
+      {/* Rim light */}
+      <pointLight
+        position={[0, 6, -10]}
+        intensity={0.5 * intensity}
         color="#ffffff"
       />
       
-      {/* Fill light - softer secondary illumination */}
-      <SpotLight 
-        position={[-5, 3, 0]} 
-        angle={0.7} 
-        penumbra={0.5} 
-        intensity={0.7} 
-        castShadow={false}
-        color="#f8fafc"
+      {/* Bottom fill light */}
+      <pointLight
+        position={[0, -5, 0]}
+        intensity={0.2 * intensity}
+        color="#ccccff"
       />
-      
-      {/* Rim light - edge highlight */}
-      <SpotLight 
-        position={[0, 5, -5]} 
-        angle={0.5} 
-        penumbra={0.5} 
-        intensity={0.8} 
-        castShadow={false}
-        color="#f1f5f9"
-      />
-      
-      {/* Ambient light - base illumination */}
-      <ambientLight intensity={0.3} />
     </>
   );
 }
 
 // Optimized car model with performance enhancements
-function OptimizedCarModel() {
+function OptimizedCarModel({ carColor = 'RED' }) {
   const modelPath = process.env.PUBLIC_URL + '/models/model_3d.gltf';
   const groupRef = useRef();
   const [model, setModel] = useState(null);
@@ -192,8 +181,8 @@ function OptimizedCarModel() {
   const [renderReady, setRenderReady] = useState(false);
   const [hovered, setHovered] = useState(false);
   
-  // Define our primary car color - Bright red is default
-  const primaryColor = CAR_COLORS.RED;
+  // Define our primary car color - Use the selected color or default to RED
+  const primaryColor = CAR_COLORS[carColor] || CAR_COLORS.RED;
   
   // Load model effect
   useEffect(() => {
@@ -412,6 +401,9 @@ function OptimizedCarModel() {
 const EnhancedModelViewer = forwardRef((props, ref) => {
   const [orbitEnabled, setOrbitEnabled] = useState(true);
   const controlsRef = useRef();
+  const [environment, setEnvironment] = useState(props.initialEnvironment || 'city');
+  const [lightIntensity, setLightIntensity] = useState(props.initialLightIntensity || 1);
+  const [carColor, setCarColor] = useState(props.initialCarColor || 'RED');
   
   // Expose methods to parent components
   useImperativeHandle(ref, () => ({
@@ -426,6 +418,17 @@ const EnhancedModelViewer = forwardRef((props, ref) => {
     // Add a property to check rotation state
     get isRotating() {
       return orbitEnabled;
+    },
+    // Add methods to control environment and lighting
+    setEnvironment: (preset) => {
+      setEnvironment(preset);
+    },
+    setLightIntensity: (intensity) => {
+      setLightIntensity(intensity);
+    },
+    // Add method to change car color
+    setCarColor: (color) => {
+      setCarColor(color);
     }
   }));
   
@@ -433,7 +436,7 @@ const EnhancedModelViewer = forwardRef((props, ref) => {
     <div className="w-full h-full" style={{ position: 'relative', overflow: 'hidden' }}>
       <Canvas
         shadows
-        camera={{ position: [5, 2, 5], fov: 45 }}
+        camera={{ position: [3, 1.5, 3], fov: 45 }}
         dpr={[1, 2]} // Responsive pixel ratio
         gl={{ 
           antialias: true,
@@ -444,17 +447,17 @@ const EnhancedModelViewer = forwardRef((props, ref) => {
       >
         <Suspense fallback={<LoadingIndicator progress={0} />}>
           <Bvh>
-            <EnhancedPBRLighting />
+            <EnhancedPBRLighting intensity={lightIntensity} />
             <Float
               speed={1.5}
               rotationIntensity={0.1}
               floatIntensity={0.2}
               enabled={false}
             >
-              <OptimizedCarModel />
+              <OptimizedCarModel carColor={carColor} />
             </Float>
             <ReflectiveFloor />
-            <Environment preset="city" />
+            <Environment preset={environment} />
           </Bvh>
           <Preload all />
           <BakeShadows />
@@ -465,7 +468,7 @@ const EnhancedModelViewer = forwardRef((props, ref) => {
           enablePan={false}
           enableZoom={true}
           enableRotate={orbitEnabled}
-          minDistance={3}
+          minDistance={2}
           maxDistance={10}
           minPolarAngle={0.2}
           maxPolarAngle={Math.PI / 2 - 0.1}
@@ -474,7 +477,7 @@ const EnhancedModelViewer = forwardRef((props, ref) => {
         <PerspectiveCamera 
           makeDefault 
           fov={45} 
-          position={[5, 2, 5]}
+          position={[3, 1.5, 3]}
           near={0.1}
           far={100}
         />
