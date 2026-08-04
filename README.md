@@ -1,5 +1,13 @@
 # Voltaris Website
 
+<!-- badges -->
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=white) ![CSS](https://img.shields.io/badge/CSS-1572B6?style=for-the-badge&logo=css3&logoColor=white) ![Shell](https://img.shields.io/badge/Shell-4EAA25?style=for-the-badge&logo=gnubash&logoColor=white) ![Dockerfile](https://img.shields.io/badge/Dockerfile-2496ED?style=for-the-badge&logo=docker&logoColor=white) ![HTML](https://img.shields.io/badge/HTML-E34F26?style=for-the-badge&logo=html5&logoColor=white)
+
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=white) ![Tailwind](https://img.shields.io/badge/Tailwind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white) ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+
+![last commit](https://img.shields.io/github/last-commit/adzetto/voltaris-website-white?style=flat-square&color=informational) ![repo size](https://img.shields.io/github/repo-size/adzetto/voltaris-website-white?style=flat-square&color=informational) ![top language](https://img.shields.io/github/languages/top/adzetto/voltaris-website-white?style=flat-square) ![language count](https://img.shields.io/github/languages/count/adzetto/voltaris-website-white?style=flat-square)
+
+
 <div align="center">
   <img src="public/logo_sadece.svg" alt="Voltaris Logo" width="150"/>
   <h3>İYTE Elektrikli Araç Takımı - Resmi Web Sitesi</h3>
